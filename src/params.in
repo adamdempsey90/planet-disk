@@ -1,0 +1,19 @@
+# Input parameters 
+Nx = 2048 
+NK = 25
+Ny = 512
+Lx = 120.0
+Ly = 30.0
+xsoft = .6
+c = 1 
+Mp = .5 
+nu = 0.0024 
+q = 1.5 
+omega = 1.0
+ 
+t0 = 0
+tau = 0
+endt = 100
+numf = 100
+
+restartfile = newm0.5nu0.0024_lx60_means.dat

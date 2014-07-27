@@ -1,0 +1,52 @@
+# This is a comment
+# Options File for meanwave code
+# Comment all but 1 option for each block 
+
+
+## Evolve the wave components
++WAVEEVOLVE
+
+## Evolve the mean components
+#+BACKEVOLVE
+
+## Include the non-linear terms in the wave equations
+#+NONLINEAR
+
+## Use the incompressible viscosous tensor
+#+SIMPLEVISC
+
+## Derivative Order
+#+SECDERIV
+#+FOURTHDERIV
+#+SIXTHDERIV
+#+EIGTHDERIV
++TENTHDERIV
+
+## Restart option
++RESTART
+
+
+## Boundary conditions
++OUTBC
+#+PERIODICBC
++WAVEKILLBC
+
+## OpenMP parallization
+#+OPENMP
+
+## Output options
+#+OUTGHOST
+#+OUTPHI
+
+#+OUTDERIV
+
+
+## Level of time stepping control 
+#+HIGHLEVEL
++LOWLEVEL
+
+
+
+
+
+
