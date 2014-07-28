@@ -4,37 +4,56 @@
 #include <complex.h>
 #include <fftw3.h>
 
+#define RINDX  j+2*(Ny/2+1)*i
+#define CINDX	j+(Ny/2+1)*i
 //#define OPENMP
 fftw_plan r2c, c2r;
 int Nx,Ny;
 double complex *cphi;
 double *rphi;
+
+void fft_init(void);
+void fft_free(void);
 int main(void) {
 	int i,j;
+	FILE *fp, *ofp;
 	Nx = 32; Ny=16;	
-	cphi = (double complex *)malloc(sizeof(double complex)*Nx*Ny);
-	rphi = (double *)cphi;
+	rphi = (double *)malloc(sizeof(double)*Nx*2*(Ny/2+1));
+	cphi = (double complex *)rphi;
 	double *x,*y;
+	x = (double *)malloc(sizeof(double)*Nx);
+	y = (double *)malloc(sizeof(double)*2*(Ny/2+1));
 	
 	for(i=0;i<Nx;i++) x[i]=-15 + i*(30.0/Nx);
-	for(i=0;i<Ny;i++) y[i]=-15 + i*(30.0/Ny);
+	for(i=0;i<2*(Ny/2+1);i++) y[i]=-15 + i*30.0/(2*(Ny/2+1));
 	
+	fp = fopen("rphi.dat","w");
 	for(i=0;i<Nx;i++) {
-		for(j=0;j<Ny;j++) {
-			rphi[j+Ny*i] = 	-1.0/sqrt(x[i]*x[i]+y[j]*y[j]+.6*.6);	
+		for(j=0;j<2*(Ny/2+1);j++) {
+			rphi[RINDX] = 	-1.0/sqrt(x[i]*x[i]+y[j]*y[j]+.6*.6);	
+			fprintf(fp,"%lg ", rphi[RINDX]);
 		}
+		fprintf(fp,"\n");
 	}
+	fclose(fp);
+	fp = fopen("cphi.dat","w");
 	
+	printf("Inializing...\n");
+	fft_init();
+	printf("Executing...\n");
+	fftw_execute(r2c);
+	printf("Outputting...\n");
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<Ny/2+1;j++) {
-			printf("%lg ", cphi[j+Ny*i]);
+			fprintf(fp,"%lg+I%lg ", creal(cphi[CINDX]),cimag(cphi[CINDX]));
 		}
+		fprintf(fp,"\n");
 	}
 	
-	fftw_execute(r2c);
-
+	fclose(fp);
 	free(x); free(y);
 	free(cphi); free(rphi);
+	fft_free();
 	return;
 }
 void fft_init(void) {
@@ -43,7 +62,7 @@ void fft_init(void) {
     int n[] = {Nx}; /* 1d transforms of length 10 */
 	int howmany = Ny;
     int idist = 1,odist = 1; 
-    int istride =Ny , ostride = Ny; /* distance between two elements in
+    int rstride = 2*(Ny/2+1) , cstride = (Ny/2+1); /* distance between two elements in
                                       the same column */
     int *inembed = n, *onembed = n;
 #ifdef OPENMP	
@@ -53,16 +72,16 @@ void fft_init(void) {
 	
 	c2r = fftw_plan_many_dft_c2r(rank, n, howmany,
                                   cphi, inembed,
-                                  istride, idist,
+                                  cstride, idist,
                                   rphi, onembed,
-                                  ostride, odist,
+                                  rstride, odist,
                                   FFTW_BACKWARD);
 
 	r2c = fftw_plan_many_dft_r2c(rank, n, howmany,
                                   rphi, inembed,
-                                  istride, idist,
+                                  rstride, idist,
                                   cphi, onembed,
-                                  ostride, odist,
+                                  cstride, odist,
                                   FFTW_FORWARD);
 	return;
 }
