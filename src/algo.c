@@ -138,7 +138,68 @@ int func (double t, const double y[], double f[],void *params)
  
   return GSL_SUCCESS;
 }
+void convolution(parameters *p, int j) {
+	int m,n;
+	double c = (p->c)*(p->c);
+	for(m=1;m<NK;m++) {	// k
+		for(n=1;n<NK;n++) {	// k'
+			if(n!=m) {
+				if(abs(n-m)<NK) {
+					if (m > n) {
+						DTUVEL(m) += -UVEL(n)*DXUVEL(m-n)
+									-VVEL(n)*I*(p->k[m-n])*UVEL(m-n)
+									+(c/(DBAR*DBAR))*SIG(n)*DXSIG(m-n)
+									-(c*DXDBAR/(DBAR*DBAR*DBAR))*SIG(n)*SIG(m-n);
+	//							-SIG(n)*(DXPIP(0,0,m-n)+I*(p->k[m-n])*PIP(0,1,m-n))/(DBAR*DBAR);
+									
+						DTVVEL(m) += -UVEL(n)*DXVVEL(m-n)
+									-I*(p->k[m]/2)*VVEL(n)*VVEL(m-n)
+									+(c/(DBAR*DBAR))*I*(p->k[m]/2)*SIG(n)*SIG(m-n);
+	//							-SIG(n)*(DXPIP(0,1,m-n)+I*(p->k[m-n])*PIP(1,1,m-n))/(DBAR*DBAR);
+						DTSIG(m) += -SIG(n)*DXUVEL(m-n)
+									-DXSIG(n)*UVEL(m-n)
+									-I*(p->k[m])*SIG(n)*VVEL(m-n);
+	
+					}
+					else {
+						DTUVEL(m) += -UVEL(n)*conj(DXUVEL(n-m))
+									-VVEL(n)*conj(I*(p->k[n-m])*UVEL(n-m))
+								+(c/(DBAR*DBAR))*SIG(n)*conj(DXSIG(n-m))
+									-(c*DXDBAR/(DBAR*DBAR*DBAR))*SIG(n)*conj(SIG(n-m));
+//									-SIG(n)*conj((DXPIP(0,0,n-m)+I*(p->k[n-m])*PIP(0,1,n-m)))/(DBAR*DBAR);	
+						DTVVEL(m) += -UVEL(n)*conj(DXVVEL(n-m))
+									 -I*(p->k[m]/2)*VVEL(n)*conj(VVEL(n-m))
+									 +(c/(DBAR*DBAR))*I*(p->k[m]/2)*SIG(n)*conj(SIG(n-m));
+	//							-SIG(n)*conj((DXPIP(0,1,n-m)+I*(p->k[n-m])*PIP(1,1,n-m)))/(DBAR*DBAR);
+						DTSIG(m) += -SIG(n)*conj(DXUVEL(n-m))
+									-DXSIG(n)*conj(UVEL(n-m))
+									-I*(p->k[m])*SIG(n)*conj(VVEL(n-m));	
+					}
+				}
+				if(m+n <NK) {
+					DTUVEL(m) += -conj(UVEL(n))*DXUVEL(m+n)
+								-conj(VVEL(n))*I*(p->k[m+n])*UVEL(m+n)
+								+(c/(DBAR*DBAR))*conj(SIG(n))*DXSIG(m+n)
+								-(c*DXDBAR/(DBAR*DBAR*DBAR))*conj(SIG(n))*SIG(m+n);
+//							-conj(SIG(n))*(DXPIP(0,0,m+n)+I*(p->k[m+n])*PIP(0,1,m+n))/(DBAR*DBAR);								
+					
+					DTVVEL(m) += -conj(UVEL(n))*DXVVEL(m+n)
+								 -I*(p->k[m]/2)*conj(VVEL(n))*VVEL(m+n)
+							 +(c/(DBAR*DBAR))*I*(p->k[m]/2)*conj(SIG(n))*SIG(m+n);
+//							-conj(SIG(n))*(DXPIP(0,1,m+n)+I*(p->k[m+n])*PIP(1,1,m+n))/(DBAR*DBAR);					
+					DTSIG(m) += -conj(SIG(n))*DXUVEL(m+n)
+								-conj(DXSIG(n))*UVEL(m+n)
+								-I*(p->k[m])*conj(SIG(n))*VVEL(m+n);
 
+				}
+			}
+		}	
+	}
+					
+							
+	return;									
+							
+}
 double complex calc_pot(double complex phi,double t, double tau) {
 	
 	if (tau==0) return phi;
