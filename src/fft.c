@@ -4,87 +4,145 @@
 #include <complex.h>
 #include <fftw3.h>
 
-#define RINDX  j+2*(Ny/2+1)*i
+#define RINDX  i+Nx*j
 #define CINDX	j+(Ny/2+1)*i
 //#define OPENMP
 fftw_plan r2c, c2r;
 int Nx,Ny;
 double complex *cphi;
-double *rphi;
-
+double *rphi, *tphi;
+double *wri;
+double complex *wco;
 void fft_init(void);
 void fft_free(void);
+void fft_r2c(int start);
+void fft_c2r(int start);
 int main(void) {
 	int i,j;
-	FILE *fp, *ofp;
-	Nx = 32; Ny=16;	
-	rphi = (double *)malloc(sizeof(double)*Nx*2*(Ny/2+1));
-	cphi = (double complex *)rphi;
+	FILE *rfp, *cfp, *xfp, *yfp;
+	Nx = 256; Ny=256;	
+	cphi = (double complex *)malloc(sizeof(double complex)*Nx*(Ny/2+1));
+	rphi = (double *)cphi;
 	double *x,*y;
 	x = (double *)malloc(sizeof(double)*Nx);
-	y = (double *)malloc(sizeof(double)*2*(Ny/2+1));
-	
+	y = (double *)malloc(sizeof(double)*Ny);
+	wco = (double complex *)malloc(sizeof(double complex)*(Ny/2+1));
+	wri = (double *)wco;
 	for(i=0;i<Nx;i++) x[i]=-15 + i*(30.0/Nx);
-	for(i=0;i<2*(Ny/2+1);i++) y[i]=-15 + i*30.0/(2*(Ny/2+1));
+	for(i=0;i<Ny;i++) y[i]=-15 + i*30.0/Ny;
 	
-	fp = fopen("rphi.dat","w");
+	rfp = fopen("phi.dat","w");
+	xfp = fopen("x.dat","w");
+	yfp = fopen("y.dat","w");
+
 	for(i=0;i<Nx;i++) {
-		for(j=0;j<2*(Ny/2+1);j++) {
-			rphi[RINDX] = 	-1.0/sqrt(x[i]*x[i]+y[j]*y[j]+.6*.6);	
-			fprintf(fp,"%lg ", rphi[RINDX]);
+		for(j=0;j< Ny;j++) {
+			rphi[RINDX] = 	-1.0/sqrt(x[i]*x[i]+y[j]*y[j]+.6*.6);		
+			fprintf(rfp,"%lg ", rphi[RINDX]);
+			fprintf(xfp,"%lg ",x[i]);
+			fprintf(yfp,"%lg ",y[j]);
 		}
-		fprintf(fp,"\n");
+		fprintf(rfp,"\n"); 
+		fprintf(xfp,"\n");
+		fprintf(yfp,"\n");
 	}
-	fclose(fp);
-	fp = fopen("cphi.dat","w");
+	fclose(rfp); fclose(xfp); fclose(yfp);
 	
+	rfp = fopen("rphi.dat","w");
+	cfp = fopen("cphi.dat","w");
 	printf("Inializing...\n");
 	fft_init();
 	printf("Executing...\n");
-	fftw_execute(r2c);
+	for(i=0;i<Nx;i++) {
+		fft_r2c(i*2*(Ny/2+1));
+	}
 	printf("Outputting...\n");
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<Ny/2+1;j++) {
-			fprintf(fp,"%lg+I%lg ", creal(cphi[CINDX]),cimag(cphi[CINDX]));
+			fprintf(rfp,"%lg ",creal(cphi[CINDX]));
+			fprintf(cfp,"%lg ",cimag(cphi[CINDX]));
 		}
-		fprintf(fp,"\n");
+		fprintf(rfp,"\n");
+		fprintf(cfp,"\n");
 	}
+	fclose(rfp); fclose(cfp);
+	for(i=0;i<Nx;i++)	fft_c2r(i*(Ny/2+1));
+	rfp = fopen("phi2.dat","w");
+	for(i=0;i<Nx;i++) {
+		for(j=0;j< Ny;j++) {
+			fprintf(rfp,"%lg ", rphi[RINDX]);
+		}
+		fprintf(rfp,"\n");
+	}
+	fclose(rfp);
 	
-	fclose(fp);
 	free(x); free(y);
-	free(cphi); free(rphi);
+	free(cphi); 
+	free(wco);
 	fft_free();
 	return;
 }
+void fft_r2c(int j) {
+	int i;
+	for(i=0;i<2*(Ny/2+1);i++) {
+		wri[i] = rphi[2*(Ny/2+1)*j+i];
+	}
+	fftw_execute(r2c);
+	for(i=0;i<Ny/2+1;i++) {
+		cphi[(Ny/2+1)*j+i] = wco[i]/Ny;
+	}
+	
+	return;
+
+}
+void fft_c2r(int j) {
+	int i;
+	for(i=0;i<Ny/2+1;i++) {
+		wco[i] = cphi[j*(Ny/2+1)+i];
+	}
+	fftw_execute(c2r);
+	for(i=0;i<2*(Ny/2+1);i++) {
+		rphi[2*(Ny/2+1)*j+i] = wri[i];
+	}	
+	return;
+
+}
 void fft_init(void) {
 
-	int rank = 1; /* not 2: we are computing 1d transforms */
-    int n[] = {Nx}; /* 1d transforms of length 10 */
-	int howmany = Ny;
-    int idist = 1,odist = 1; 
-    int rstride = 2*(Ny/2+1) , cstride = (Ny/2+1); /* distance between two elements in
-                                      the same column */
-    int *inembed = n, *onembed = n;
-#ifdef OPENMP	
-	fftw_plan_with_nthreads( 1 );
-#endif
-	
-	
-	c2r = fftw_plan_many_dft_c2r(rank, n, howmany,
-                                  cphi, inembed,
-                                  cstride, idist,
-                                  rphi, onembed,
-                                  rstride, odist,
-                                  FFTW_BACKWARD);
+// 	int rank = 1; /* not 2: we are computing 1d transforms */
+//     int n[] = {Nx}; /* 1d transforms of length 10 */
+// 	int howmany = Ny;
+//     int idist = 1,odist = 1; 
+//     int rstride = Ny , cstride=Ny; /* distance between two elements in
+//                                       the same column */
+//     int *inembed = n, *onembed = n;
 
-	r2c = fftw_plan_many_dft_r2c(rank, n, howmany,
-                                  rphi, inembed,
-                                  rstride, idist,
-                                  cphi, onembed,
-                                  cstride, odist,
-                                  FFTW_FORWARD);
+	
+// 	
+// 	c2r = fftw_plan_many_dft_c2r(rank, n, howmany,
+//                                   cphi, inembed,
+//                                   cstride, idist,
+//                                   rphi, onembed,
+//                                   rstride, odist,
+//                                   FFTW_ESTIMATE);
+// 	if (c2r == NULL) printf("Problem with c2r\n");
+// 	r2c = fftw_plan_many_dft_r2c(rank, n, howmany,
+//                                   rphi, inembed,
+//                                   rstride, idist,
+//                                   cphi, onembed,
+//                                   cstride, odist,
+//                                   FFTW_ESTIMATE);
+//     if (r2c == NULL) printf("Problem with r2c\n");
+
+	c2r = fftw_plan_dft_c2r_1d(Ny, wco,wri,FFTW_ESTIMATE);
+	if (c2r == NULL) printf("Problem with c2r\n");
+	r2c = fftw_plan_dft_r2c_1d(Ny, wri,wco,FFTW_ESTIMATE);
+	if (r2c == NULL) printf("Problem with r2c\n");
+	
+	
 	return;
 }
+
 
 void fft_free(void) {
 	fftw_destroy_plan(r2c);
