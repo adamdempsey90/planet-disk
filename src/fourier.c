@@ -97,11 +97,17 @@ int main(void) {
 	return;
 
 }
-void convolve(double complex *q1, double complex *q2, double complex *res, int Nx, int Ny) {
+void convolve(double complex *q1, double complex *q2, double complex *res, double complex mult) {
+/*		Convolution function using previously declared de-aliasing mask
+	Inputs: q1 & q2 are the two complex arrays being convolved 
+			res is an initialized array to which the convolution will be added 
+			mult is a constant multiplication factor 
+*/
+
 	int i,j;
 
 /* De-alias with 2/3 truncation rule */	
-	for(i=0;i<NTOTC;i++) {wc1[i] = q1[i]*mask[i]; wc2[i] = q2[i]*mask[i];}
+	for(i=0;i<NTOTC;i++) {wc1[i] = q1[i]*mask[i]*mult; wc2[i] = q2[i]*mask[i];}
 
 /* FFT these to real space */	
 	fftw_execute(c2r1);
@@ -112,12 +118,44 @@ void convolve(double complex *q1, double complex *q2, double complex *res, int N
 
 /* FFT back to complex space */
 	fftw_execute(r2c3);
-/* Copy output */
-	memcpy(res,wc3,sizeof(double complex)*NTOTC);	
+	
+/* add output */
+	for(i=0;i<NTOTC;i++) {
+		res[i] += wc3[i];
+	}	
 
 	return;
 }
+void convolve_inv(double complex *q1, double complex *q2, double complex *res, double complex mult) {
+/*		Convolution function using previously declared de-aliasing mask
+		This function uses the inverse of q1, so make sure q1 != 0 anywhere.
+	Inputs: q1 & q2 are the two complex arrays being convolved 
+			res is an initialized array to which the convolution will be added 
+			mult is a constant multiplication factor 
+*/
 
+	int i,j;
+
+/* De-alias with 2/3 truncation rule */	
+	for(i=0;i<NTOTC;i++) {wc1[i] = mask[i]*mult/q1[i]; wc2[i] = q2[i]*mask[i];}
+
+/* FFT these to real space */	
+	fftw_execute(c2r1);
+	fftw_execute(c2r2);
+
+/* Form product in real space */
+	for(i=0;i<NTOTR;i++) wr3[i] = wr1[i]*wr2[i]/(Ny*Ny);
+
+/* FFT back to complex space */
+	fftw_execute(r2c3);
+	
+/* add output */
+	for(i=0;i<NTOTC;i++) {
+		res[i] += wc3[i];
+	}	
+
+	return;
+}
 
 void init_Field(Field *fld) {
 	int i,j;

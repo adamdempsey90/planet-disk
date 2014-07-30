@@ -95,10 +95,8 @@
 typedef struct stress {
 	double complex *Txx, *Txy, *Tyy;
 	double complex *Pixx, *Pixy, *Piyy;
-	double complex *divPix, *divPiy;
-	
+	double complex *divPix, *divPiy, *divv;
 
-	
 } stress;
 
 		
@@ -112,7 +110,9 @@ typedef struct parameters {
 	double *k;
 	double *x, *y;
 	double complex *rhs;
-	double complex *u, *v, *sig, *dxu, *dxv, *dxsig;
+	double complex *u, *v, *sig;
+	double complex *dxu, *dxv, *dxsig;
+	double complex *dyu, *dyv, *dysig;
 	double complex *dtu, *dtv, *dtsig;
 	double complex *phi,*dxphi;
 	double *t;

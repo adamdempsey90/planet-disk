@@ -1,5 +1,83 @@
 #include "meanwave.h"
 
+
+int func (double t, const double y[], double f[],void *params) {
+
+	Field *fld = (Field *)params;
+	
+	fill_rhs(fld,t);
+
+/* Copy complex data into real array with u,v,sig all combined for gsl */
+	for(i=0;i<NTOTC;i++) {
+		y[i] = creal(
+
+
+
+}
+void fill_rhs(Field *fld, double t) {
+/* 		Fill the RHS of the EOM */
+	int i;
+	double qom = (fld->q)*(fld->omega);
+	double om2 = 2*(fld->omega);
+	double k;
+/* Fill the derivative arrays */
+	calc_deriv(fld->u,fld->dxu);
+	calc_deriv(fld->v,fld->dxv);
+	calc_deriv(fld->sig,fld->dxsig);
+
+/*	Fill RHS arrays with any non-convolution terms*/	
+	for(i=0;i<NTOTC;i++) {
+		k = fld->k[i];
+		fld->dtu[i] = qom*I*k*(fld->u[i])*(fld->x[i]); + om2*(fld->v[i]) 
+						- calc_pot(fld->dxphi[i],t);
+		fld->dtv[i] = qom*I*k*(fld->v[i])*(fld->x[i]) +(qom-om2)*(fld->u[i])
+						-I*k*calc_pot(fld->phi[i],t);
+		fld->dtsig[i] = qom*I*k*(fld->x[i])*(fld->sig[i]);
+	}
+	
+/* Start adding the convolutions. */
+	
+	convolve(fld->u,fld->dxu,fld->dtu,-1);
+	convolve(fld->v,fld->dyu,fld->dtu,-1);
+	
+	convolve(fld->u,fld->dxv,fld->dtv,-1);
+	convolve(fld->v,fld->dyv,fld->dtv,-1);
+
+	convolve(fld->sig,fld->dxu,fld->dtsig,-1);
+	convolve(fld->dxsig,fld->u.fld->dtsig,-1);
+	convolve(fld->sig,fld->dyv,fld->dtsig,-1);
+	convolve(fld->dysig,fld->v,fld->dtsig,-1);
+	
+/* Add viscosity and pressure */
+	
+	add_viscosity(fld);
+	
+
+	
+	return;	
+}	
+
+void add_advec(Field *fld) {
+	int i;
+
+	convolve(fld->u,fld->dxu,fld->dtu,-1);
+	convolve(fld->v,fld->dyu,fld->dtu,-1);
+	
+	convolve(fld->u,fld->dxv,fld->dtv,-1);
+	convolve(fld->v,fld->dyv,fld->dtv,-1);
+
+	convolve(fld->sig,fld->dxu,fld->dtsig,-1);
+	convolve(fld->dxsig,fld->u.fld->dtsig,-1);
+	convolve(fld->sig,fld->dyv,fld->dtsig,-1);
+	convolve(fld->dysig,fld->v,fld->dtsig,-1);
+	
+}
+
+void add_mass(Field *fld) {
+	int i;
+
+}
+
 int func (double t, const double y[], double f[],void *params)
 {
 	parameters *p = (parameters *)params;
