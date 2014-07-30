@@ -4,13 +4,19 @@
 int func (double t, const double y[], double f[],void *params) {
 
 	Field *fld = (Field *)params;
-	
+
+/*	Get the new u,v,sig */	
+	global_r2c(y, fld);
+
+/* Calculate the RHS */	
 	fill_rhs(fld,t);
 
 /* Copy complex data into real array with u,v,sig all combined for gsl */
-	for(i=0;i<NTOTC;i++) {
-		y[i] = creal(
+	memcpy(&f[0],(double *)fld->dtu,sizeof(double complex)*NTOTC);
+	memcpy(&f[NTOTR],(double *)fld->dtv,sizeof(double complex)*NTOTC);
+	memcpy(&f[2*NTOTR],(double *)fld->dtsig,sizeof(double complex)*NTOTC);
 
+	return  GSL_SUCCESS; 
 
 
 }
@@ -20,10 +26,11 @@ void fill_rhs(Field *fld, double t) {
 	double qom = (fld->q)*(fld->omega);
 	double om2 = 2*(fld->omega);
 	double k;
+
 /* Fill the derivative arrays */
-	calc_deriv(fld->u,fld->dxu);
-	calc_deriv(fld->v,fld->dxv);
-	calc_deriv(fld->sig,fld->dxsig);
+	calc_deriv(fld->u,fld->dxu,fld->params,"odd",fld->ubc,fld->dx);
+	calc_deriv(fld->v,fld->dxv,fld->params,"odd",fld->vbc,fld->dx);
+	calc_deriv(fld->sig,fld->dxsig,fld->params,"even",fld->sigbc,fld->dx);
 
 /*	Fill RHS arrays with any non-convolution terms*/	
 	for(i=0;i<NTOTC;i++) {
@@ -57,26 +64,9 @@ void fill_rhs(Field *fld, double t) {
 	return;	
 }	
 
-void add_advec(Field *fld) {
-	int i;
 
-	convolve(fld->u,fld->dxu,fld->dtu,-1);
-	convolve(fld->v,fld->dyu,fld->dtu,-1);
-	
-	convolve(fld->u,fld->dxv,fld->dtv,-1);
-	convolve(fld->v,fld->dyv,fld->dtv,-1);
 
-	convolve(fld->sig,fld->dxu,fld->dtsig,-1);
-	convolve(fld->dxsig,fld->u.fld->dtsig,-1);
-	convolve(fld->sig,fld->dyv,fld->dtsig,-1);
-	convolve(fld->dysig,fld->v,fld->dtsig,-1);
-	
-}
 
-void add_mass(Field *fld) {
-	int i;
-
-}
 
 int func (double t, const double y[], double f[],void *params)
 {
