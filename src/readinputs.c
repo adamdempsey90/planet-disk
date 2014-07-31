@@ -1,7 +1,6 @@
-#include "meanwave.h" 
-void read_input(parameters *p) { 
+#include "planetdisk.h" 
+void read_input(Parameters *p) { 
 	 p->Nx = 2048;
-	 NK = 25;
 	 p->Ny = 512;
 	 p->Lx = 120.0;
 	 p->Ly = 30.0;
@@ -17,6 +16,6 @@ void read_input(parameters *p) {
 	 p->numf = 100;
 	 sprintf(p->restartfname,"newm0.5nu0.0024_lx60_means.dat");
 	 p->dx=(p->Lx)/(p->Nx);
-	 p->Ntot = p->Nx+2*NG;
+
 	 return; 
 }

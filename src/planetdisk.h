@@ -92,12 +92,44 @@
 #define PHI(m) (p->phi[m+NK*(j-NG)])
 #define DXPHI(m) (p->dxphi[m+NK*(j-NG)])
 
-typedef struct stress {
+
+
+
+typedef struct Field {
+
+
+	Parameters *Params;
+	
+	Stress *Tens;
+
+	double *x, *y, *k;
+	
+	double complex *u, *v, *sig;
+	double complex *dxu, *dxv, *dxsig;
+	double complex *dyu, *dyv, *dysig;
+	double complex *dtu, *dtv, *dtsig;
+	double complex *phi, *dxphi;
+	
+	
+
+} Field;
+typedef struct Parameters {
+	
+	int Nx, Ny, Nk;
+	double Lx, Ly, dx;
+	double c, omega, xs, nu, q, Mp;
+	double t0, endt, tau;
+	int numf;
+	char restartfname[50];
+	
+} Parameters;
+
+typedef struct Stress {
 	double complex *Txx, *Txy, *Tyy;
 	double complex *Pixx, *Pixy, *Piyy;
-	double complex *divPix, *divPiy, *divv;
+	double complex *divPix, *divPiy;
 
-} stress;
+} Stress;
 
 		
 typedef struct parameters {

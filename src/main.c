@@ -1,92 +1,24 @@
 #include "meanwave.h"
-int main (void)
-{
+int main (void) {
 	int i, cutind;
 	double time=0;
- 
-  double *y;
+ 	double *y;
   
-  func_count=0;
-  parameters *P = (parameters *)malloc(sizeof(parameters));
-  
-  read_input(P);
-  printf("Allocating structs...\n");
-  allocate_params(P);
+	(Field *fld) = (Field *)malloc(sizeof(Field));
+	fld->Params = (Parameters *)malloc(sizeof(Parameters));
+	
+	read_input(fld);
+	allocate_field(fld);
 
 
-  
 
-  y = (double *)malloc((P->Ntot)*(6*NK-3)*sizeof(double));
-  
-  
-  printf("Initialzing...\n");
-  init(P,y);
-#ifdef RESTART
-	restart(P);
-#endif
-//  read_athena(P);
-	printf("Appying BC's...\n");
-  bounds(P,0);
-	 
 
-  c_2_r(y,P->cy,P->Nx);	
-  printf("\tOUTPUT 0\n");
-  output_func(P,0);
-  
+
+
   gsl_odeiv2_system sys = {func, NULL, (6*NK-3)*(P->Ntot), P};
 
 
- 	
-//	gsl_odeiv2_driver_set_hmin(d,0.01);
-  
-	
-	
-	printf("Nx=%d, c=%g, Mp=%g, nu=%g, Nk=%d, Lx=%g dx=%g, xsoft=%g, t_end=%g \n",
-			P->Nx, P->c, P->Mp, P->nu, NK, P->Lx, 
-			P->dx, P->xsoft,P->endt);
-	output_params(P);
-	
 
-  
-	
-	printf("Starting loop\n");
-//	Evolve with high-level wrapper
-
-#ifdef HIGHLEVEL
-	 gsl_odeiv2_driver * d = 
- 			 gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk8pd,
-				  1e-8, 1e-4, 0.0);
-   for (i = 1; i <= P->numf; i++)
-    {
-      if (P->conf_flag == 1) {
-      	printf("CONVERGENCE DETECTED \n");
-      	break;
-      }
-      P->t[i-1] = P->t0 + i * (P->endt) / ((double) P->numf);
-      P->lastt = time;
-      int status = gsl_odeiv2_driver_apply (d, &time, P->t[i-1], y);
-		printf("finished step %d, at t=%g\n", i, P->t[i-1]);
-		printf("\t\t\t deriv count = %d\n", func_count);
-		r_2_c(y,P->cy,P->Nx);
-#ifdef INTFAC
-		remove_shear(P,time-P->lastt);
-#endif
-		c_2_r(y,P->cy,P->Nx);
-		bounds(P,time);
-		
-//		output_func(y,P,P->t[i-1]);
-//		output_amf(P,P->t[i-1]);
-      if (status != GSL_SUCCESS)
-		{
-		  printf ("error, return value=%d\n", status);
-		  break;
-		}
-    }
-    gsl_odeiv2_driver_free (d);
-#endif
-
-// Evolve with low-level wrapper to see step sizes.
-	
 	
 #ifdef LOWLEVEL
 	

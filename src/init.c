@@ -1,42 +1,4 @@
-#include "meanwave.h"
-// void read_input(parameters *p) {
-// 	int i;
-// 	printf("Reading inputs...\n");
-// 
-// 
-// 	p->Nx=2048; 
-// 	p->Ny = 512;
-// 	p->Ntot = p->Nx+2*NG;
-// 	p->Lx=120.0; 
-// 	p->Ly=30.0;
-// 	p->dx=(p->Lx)/(p->Nx); 
-// 	p->xsoft = .6;
-// 	p->c=1; 
-// 	p->Mp=.5; 
-// 	p->nu=0.0024; 
-// 	p->q=1.5; 
-// 	p->omega=1.0;
-//  
-// 	p->kfac = 2.0;
-// //  	p->k *= p->kfac;
-// 
-// 	p->t0 = 0;
-// 	p->tau = 0;
-// 	p->endt = 100;
-// 	p->numf = 100;	
-// 
-// 	sprintf(p->restartfname, "newm0.5nu0.0024_lx60_means.dat");
-// 	p->conv_flag = 0;
-// 	
-// 	p->conv_tol = 1e-4;
-// 
-// //	read_params(p);	
-// 
-// 	
-// 	
-// 	printf("Finished reading inputs...\n");
-// 	return;
-// }
+#include "planetdisk.h"
 
 void init(parameters *p, double *y) {
 	printf("hi\n");
@@ -145,61 +107,97 @@ void restart(parameters *p) {
 	return;
 }
 
-void allocate_params(parameters *p) {
-	int i,j;
+
+
+
+
+void allocate_field(Field *fld) {
+
 	
-	p->k = (double *)malloc(NK*sizeof(double));
-	p->x = (double *)malloc((p->Ntot)*sizeof(double));
-  	p->phi = (double complex *)malloc((p->Nx)*NK*sizeof(double complex));
-  	p->dxphi = (double complex *)malloc((p->Nx)*NK*sizeof(double complex));
+	fld->Tens = (Stress *)malloc(sizeof(Stress));
+		
+	fld->x = (double *)malloc(sizeof(double)*Nx);
+	fld->y = (double *)malloc(sizeof(double)*Ny);
+	fld->k = (double *)malloc(sizeof(double)*NC);
+	
+	fld->u = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->v = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->sig = (double complex *)malloc(sizeof(double complex)*NTOTC);
 
-  	p->cy = (double complex *)malloc((p->Ntot)*3*NK*sizeof(double complex));
-  	p->dxcy = (double complex *)malloc((p->Ntot)*3*NK*sizeof(double complex));
-  	p->t = (double *)malloc((p->numf)*sizeof(double));
-  	
-	p->rhs = (double complex *)malloc((p->Ntot)*(6*NK-3)*sizeof(double complex));
-	p->realrhs = (double *)malloc((p->Ntot)*(6*NK-3)*sizeof(double));
+	fld->dxu = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->dxv = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->dxsig = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	
+	fld->dyu = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->dyv = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->dysig = (double complex *)malloc(sizeof(double complex)*NTOTC);		
 
-	p->VT = (stress *)malloc(sizeof(stress));
-	p->MF = (massflux *)malloc(sizeof(massflux));
-	p->MF->mf = (double complex *)malloc((p->Ntot)*NK*sizeof(double complex));
-	p->MF->dxmf = (double complex *)malloc((p->Ntot)*NK*sizeof(double complex));
+	fld->dtu = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->dtv = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->dtsig = (double complex *)malloc(sizeof(double complex)*NTOTC);	
+	
+	fld->phi = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->dxphi = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	
+	fld->Tens->Txx = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->Tens->Txy = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->Tens->Tyy = (double complex *)malloc(sizeof(double complex)*NTOTC);
 
-	for(i=0;i<2;i++) {
-		for(j=i;j<2;j++) {
-			p->VT->p[i][j]=(double complex *)malloc((p->Ntot)*NK*sizeof(double complex));
-			p->VT->pp[i][j]=(double complex *)malloc((p->Ntot)*NK*sizeof(double complex));
-			p->VT->dxp[i][j]=(double complex *)malloc((p->Ntot)*NK*sizeof(double complex));
-			p->VT->dxpp[i][j]=(double complex *)malloc((p->Ntot)*NK*sizeof(double complex));
-		}
-	}
+	fld->Tens->Pixx = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->Tens->Pixy = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->Tens->Piyy = (double complex *)malloc(sizeof(double complex)*NTOTC);
+
+	fld->Tens->divPix = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	fld->Tens->divPiy = (double complex *)malloc(sizeof(double complex)*NTOTC);
+
 	return;
 }
-void free_params(parameters *p) {
-	int i,j;
-	free(p->MF->mf);
-	free(p->MF->dxmf);	
+
+void free_field(Field *fld) {
+
+	free(fld->x);
+	free(fld->y);
+	free(fld->k);
 	
-	for(i=0;i<2;i++) {	
-		for(j=i;j<2;j++) {
-			free(p->VT->p[i][j]);	
-			free(p->VT->pp[i][j]);	
-			free(p->VT->dxp[i][j]);	
-			free(p->VT->dxpp[i][j]);	
-		}
-	}
-	free(p->VT);
-	free(p->MF);
-	free(p->cy); free(p->x); free(p->rhs);
-	free(p->dxcy); free(p->k);
-	free(p->phi); free(p->dxphi);
-	free(p->realrhs); free(p->t);
+	free(fld->u);
+	free(fld->v);
+	free(fld->sig);
+
+	free(fld->dxu);
+	free(fld->dxv);
+	free(fld->dxsig);
 	
-	free(p);
+	free(fld->dyu);
+	free(fld->dyv);
+	free(fld->dysig);		
+
+	free(fld->dtu);
+	free(fld->dtv);
+	free(fld->dtsig);	
+	
+	free(fld->phi);
+	free(fld->dxphi);
+	
+	free(fld->Tens->Txx);
+	free(fld->Tens->Txy);
+	free(fld->Tens->Tyy);
+
+	free(fld->Tens->Pixx);
+	free(fld->Tens->Pixy);
+	free(fld->Tens->Piyy);
+
+	free(fld->Tens->divPix);
+	free(fld->Tens->divPiy);
+
+	free(fld->Tens);
+	free(fld->Params);
+	free(fld);
 	
 	return;
 
 }
+
+
 void initphi(parameters *p) {
 	int j,m;
 	double re, im, dxre,dxim;
