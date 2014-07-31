@@ -34,12 +34,27 @@ void fill_rhs(Field *fld, double t) {
 
 /*	Fill RHS arrays with any non-convolution terms*/	
 	for(i=0;i<NTOTC;i++) {
+	
+#ifndef BACKEVOLVE
+		if( mod(i/(float)NC,1) != 0) {
+#endif
+#ifndef WAVEEVOLVE 
+		if( mod(i/(float)NC,1) == 0 ) {
+#endif
+
 		k = fld->k[i];
 		fld->dtu[i] = qom*I*k*(fld->u[i])*(fld->x[i]); + om2*(fld->v[i]) 
-						- calc_pot(fld->dxphi[i],t);
+						- calc_pot(fld->dxphi[i],t,fld->tau);
 		fld->dtv[i] = qom*I*k*(fld->v[i])*(fld->x[i]) +(qom-om2)*(fld->u[i])
-						-I*k*calc_pot(fld->phi[i],t);
+						-I*k*calc_pot(fld->phi[i],t,fld->tau);
 		fld->dtsig[i] = qom*I*k*(fld->x[i])*(fld->sig[i]);
+		
+#ifndef BACKEVOLVE
+		}
+#endif
+#ifndef WAVEEVOLVE 
+		}
+#endif
 	}
 	
 /* Start adding the convolutions. */
