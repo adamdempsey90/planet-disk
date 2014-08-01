@@ -75,7 +75,7 @@ typedef struct Field {
 	double complex *dyu, *dyv, *dysig;
 	double complex *dtu, *dtv, *dtsig;
 	double complex *phi, *dxphi;
-	
+	double *vx, *vy, *dens;
 	
 
 } Field;

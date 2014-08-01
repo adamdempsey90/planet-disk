@@ -5,7 +5,7 @@ void init(Field *fld) {
 	double Lx = fld->Params->Lx;
 	double Ly = fld->Params->Ly;
 	
-	for(i=0;i<Nx;i++) fld->x[i] = -.5*Lx + (i+.5)*(Lx/Nx);
+	for(i=0;i<Nx;i++) fld->x[i] = (i+.5)*(Lx/Nx);
 	for(i=0;i<Ny;i++) fld->y[i] = -.5*Ly + (i+.5)*(Ly/Ny);
 	for(i=0;i<NC;i++) fld->k[i]= i*(M_PI*2/Ly);
 	
@@ -26,6 +26,10 @@ void init(Field *fld) {
 			fld->Tens->Txy[CINDX] = 0;
 			fld->Tens->Tyy[CINDX] = 0;
 			
+// 			fld->Tens->Pixx[CINDX] = -(fld->Params->c)(fld->Params->c)*(fld->Params->sig0);
+// 			fld->Tens->Pixy[CINDX] = -(fld->Params->nu)*(fld->Params->q)*(fld->Params->omega)*(fld->Params->sig0);
+// 			fld->Tens->Piyy[CINDX] = -(fld->Params->c)(fld->Params->c)*(fld->Params->sig0);
+
 			fld->Tens->Pixx[CINDX] = 0;
 			fld->Tens->Pixy[CINDX] = 0;
 			fld->Tens->Piyy[CINDX] = 0;
@@ -106,6 +110,10 @@ void allocate_field(Field *fld) {
 
 	fld->Tens->divPix = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->Tens->divPiy = (double complex *)malloc(sizeof(double complex)*NTOTC);
+
+	vx = (double *)u;
+	vy = (double *)v;
+	dens = (double *)sig;
 
 	return;
 }

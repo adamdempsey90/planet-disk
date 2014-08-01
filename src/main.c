@@ -1,4 +1,4 @@
-#include "meanwave.h"
+#include "planetdisk.h"
 int main (void) {
 	int i;
 	double time=0;
@@ -16,21 +16,21 @@ int main (void) {
 
 
 
-  gsl_odeiv2_system sys = {func, NULL, NTOTR, fld};
+	gsl_odeiv2_system sys = {func, NULL, NTOTR, fld};
 
 
 	
 	const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
 
   	gsl_odeiv2_step * s  = gsl_odeiv2_step_alloc (T, NTOTR);
- 	 gsl_odeiv2_control * c  = gsl_odeiv2_control_y_new (1e-8, 1e-8);
- 	 gsl_odeiv2_evolve * e  = gsl_odeiv2_evolve_alloc (NTOTR);
+ 	gsl_odeiv2_control * c  = gsl_odeiv2_control_y_new (1e-8, 1e-8);
+ 	gsl_odeiv2_evolve * e  = gsl_odeiv2_evolve_alloc (NTOTR);
  
  
 
   double	h = .1;
-  double 	t=P->t0;
-  double 	t1 = P->endt;
+  double 	t=fld->Params->t0;
+  double 	t1 = fld->Params->endt;
   double dt;
   i=1;
   
@@ -41,7 +41,7 @@ int main (void) {
     {
       
       dt = t;
-      P->lastt = t;
+
       int status = gsl_odeiv2_evolve_apply (e, c, s,
                                            &sys, 
                                            &t, t1,
