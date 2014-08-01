@@ -10,9 +10,6 @@
 #include <complex.h>
 #include <sys/stat.h>
 
-#define NREAL 9
-#define NCOMPLEX 6
-
 
 
 #ifdef OPENMP
@@ -53,44 +50,13 @@
 #endif
 
 
+#define NC (Ny/2 + 1)
+#define NR 2*NC
+#define NTOTR  Nx*NR
+#define NTOTC Nx*NC
 
-#define RINDX(i) i+NREAL*j
-#define RINDXP(i) i+NREAL*(j+1)
-#define RINDXM(i) i+NREAL*(j-1)
-#define RINDXM2(i) i+NREAL*(j-2)
-#define RINDXP2(i) i+NREAL*(j+2)
-
-#define CINDX(i,m) i+3*m+3*NK*j
-#define CINDXP(i,m) i+3*m+3*NK*(j+1)
-#define CINDXM(i,m) i+3*m+3*NK*(j-1)
-#define CINDXM2(i,m) i+3*m+3*NK*(j-2)
-#define CINDXP2(i,m) i+3*m+3*NK*(j+2)
-
-
-#define SIGNUM(Z)	((Z > 0) - (Z < 0))
-#define ISZERO(j) (j>1)
-
-#define UVEL(m)  (p->cy[CINDX(0,m)])
-#define VVEL(m) (p->cy[CINDX(1,m)])
-#define SIG(m) (p->cy[CINDX(2,m)])
-#define VXBAR (p->cy[CINDX(0,0)])
-#define VYBAR (p->cy[CINDX(1,0)])
-#define DBAR (p->cy[CINDX(2,0)])
-#define XCORD (p->x[j])
-#define PIP(i,n,m) (p->VT->p[i][n][m+NK*j])
-#define PIPP(i,n,m) (p->VT->pp[i][n][m+NK*j])
-#define DXUVEL(m)  (p->dxcy[CINDX(0,m)])
-#define DXVVEL(m) (p->dxcy[CINDX(1,m)])
-#define DXSIG(m) (p->dxcy[CINDX(2,m)])
-#define DXVXBAR (p->dxcy[CINDX(0,0)])
-#define DXVYBAR (p->dxcy[CINDX(1,0)])
-#define DXDBAR (p->dxcy[CINDX(2,0)])
-#define DXPIP(i,n,m) (p->VT->dxp[i][n][m+NK*j])
-#define DXPP(i,n,m) (p->VT->dxpp[i][n][m+NK*j])
-#define DXMF(m) (p->MF->dxmf[m+NK*j])
-#define MF(m) (p->MF->mf[m+NK*j])
-#define PHI(m) (p->phi[m+NK*(j-NG)])
-#define DXPHI(m) (p->dxphi[m+NK*(j-NG)])
+#define CINDX j+i*NC
+#define RINDX j+i*NR
 
 
 
@@ -117,7 +83,7 @@ typedef struct Parameters {
 	
 	int Nx, Ny, Nk;
 	double Lx, Ly, dx;
-	double c, omega, xs, nu, q, Mp;
+	double c, omega, xs, nu, q, Mp, sig0;
 	double t0, endt, tau;
 	int numf;
 	char restartfname[50];
@@ -132,58 +98,4 @@ typedef struct Stress {
 } Stress;
 
 		
-typedef struct parameters {
-
-	int Nx,Ntot,Ny;
-	double Lx,dx,xsoft,c,Mp,nu,q,omega,Ly,kfac;
-	double t0,endt,tau;
-	int numf;
-
-	double *k;
-	double *x, *y;
-	double complex *rhs;
-	double complex *u, *v, *sig;
-	double complex *dxu, *dxv, *dxsig;
-	double complex *dyu, *dyv, *dysig;
-	double complex *dtu, *dtv, *dtsig;
-	double complex *phi,*dxphi;
-	double *t;
-	double lastt;
-	
-	char restartfname[50];
-	stress *VT;
-	
-	massflux *MF;
-	
-	int conv_flag;
-	double conv_tol;
-	
-	double xsplit;	
-	
-}	parameters;
-
-
-int func (double t, const double y[], double f[],void *params);
-void output_func(parameters *p, double ti);
-void read_athena(parameters *p);
-void read_input(parameters *p);
-void c_2_r(double *y,const double complex *cy, const int Nx);
-void r_2_c(const double *y,  double complex *cy, const int Nx);
-void output_params(parameters *P);
-void restart(parameters *p);
-void read_params(parameters *P); 
-void output_amf(parameters *p, double ti);
-void free_params(parameters *p);
-void calc_stress( parameters *p );
-void init(parameters *p, double *y);
-void allocate_params(parameters *p);
-void calc_derivs(parameters *p, int flag);
-void bounds( parameters *p, double t);
-void wavekillbc(parameters *p,double dt);
-void calcTwd(parameters *p, double ti);
-void initphi(parameters *p);
-double complex calc_pot(double complex phi,double t, double tau);
-void write_phi(parameters *p);
-
-int func_count;
-int NK;
+int Nx, Ny;

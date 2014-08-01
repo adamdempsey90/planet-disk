@@ -28,7 +28,7 @@ void add_visc(Field *fld) {
 	int i;
 
 /* Calculate div(Pi) */	
-calc_deriv(fld->u,fld->dxu,fld->params,"odd",fld->ubc,fld->dx);
+	calc_deriv(fld->u,fld->dxu,fld->params,"odd",fld->ubc,fld->dx);
 	calc_deriv(fld->Tens->Pixx,fld->Tens->divPix,NULL,"even",fld->Pixxbc,fld->dx);
 	calc_deriv(fld->Tens->Pixy,fld->Tens->divPiy,NULL,"even",fld->Pixybc,fld->dx);
 	

@@ -1,85 +1,42 @@
 #include "planetdisk.h"
 
-void init(parameters *p, double *y) {
-	printf("hi\n");
-	int i,j,n,m;
+void init(Field *fld) {
+	int i,j;
+	double Lx = fld->Params->Lx;
+	double Ly = fld->Params->Ly;
 	
-	printf("k=\n");
-	for(i=0;i<NK;i++) {
-		p->k[i] = i*(2*M_PI)/(p->Ly);
-		printf("\t %lg",p->k[i]);
-	}
-	printf("\n");
-#ifdef OPENMP
-	#pragma omp parallel private(i,j,n,m) shared(p,y) num_threads(NUMTHREADS)
-{	
+	for(i=0;i<Nx;i++) fld->x[i] = -.5*Lx + (i+.5)*(Lx/Nx);
+	for(i=0;i<Ny;i++) fld->y[i] = -.5*Ly + (i+.5)*(Ly/Ny);
+	for(i=0;i<NC;i++) fld->k[i]= i*(M_PI*2/Ly);
+	
+	initphi(fld);
+	
+	for(i=0;i<Nx;i++) {
+		for(j=0;j<NC;j++) {
+			fld->u[CINDX] = 0;
+			fld->v[CINDX] = 0;
+			if(j==0)	fld->sig[CINDX] = fld->Params->sig0;
+			
+			else	fld->sig[CINDX] = 0;
+			fld->dxu[CINDX] = 0;
+			fld->dxv[CINDX] = 0;
+			fld->dxsig[CINDX] = 0;
+			
+			fld->Tens->Txx[CINDX] = 0;
+			fld->Tens->Txy[CINDX] = 0;
+			fld->Tens->Tyy[CINDX] = 0;
+			
+			fld->Tens->Pixx[CINDX] = 0;
+			fld->Tens->Pixy[CINDX] = 0;
+			fld->Tens->Piyy[CINDX] = 0;
 
-	#pragma omp for schedule(static)
-#endif
-	for(i=0;i<(6*NK*(p->Ntot)-3*(p->Ntot));i++) {
-		if (i < 3*NK*(p->Ntot) ) {
-			p->rhs[i]=0;
- 		}
- 		y[i]=0; 
- 		p->realrhs[i]=0;
- 	 }
+			fld->Tens->divPix[CINDX] = 0;
+			fld->Tens->divPiy[CINDX] = 0;
 
-#ifdef OPENMP
-	#pragma omp for schedule(static)
-#endif  
-	for(j=0;j<p->Ntot;j++) {
-		p->x[j] = -(p->Lx)/2 + (p->dx)*(0.5+j-NG);
-		for(m=0;m<NK;m++) {
-			if (m==0) {
-				VXBAR = 0;
-				VYBAR = 0;
-				DBAR = 1.0;
-				DXVXBAR = 0;
-				DXVYBAR = 0;
-				DXDBAR = 0;
-				PIP(0,0,0) =-(p->c)*(p->c);
-				PIP(1,1,0)=-(p->c)*(p->c);
-				PIP(0,1,0)= -(p->nu)*(p->q)*(p->omega);
-			}
-			else {
-				UVEL(m) = 0;
-				VVEL(m) = 0;
-				SIG(m) = 0;
-				DXUVEL(m) = 0;
-				DXVVEL(m) = 0;
-				DXSIG(m) = 0;
-				PIP(0,0,m) = 0;
-				PIP(1,1,m)= 0;
-				PIP(0,1,m)= 0;					
-				DXPIP(0,0,m) = 0;
-				DXPIP(0,1,m) = 0;
-				DXPIP(0,0,m) = 0;				
-			}
-		
-			for(i=0;i<2;i++) {
-				p->MF->mf[m+NK*j] = 0;
-				DXMF(m) = 0;
-				for(n=i;n<2;n++) {
-					PIPP(i,n,m) = 0;
-					DXPP(i,n,m) = 0;
-				}
-			}
 		}
-	
-	}		
-#ifdef OPENMP
-}
-#endif
-	
-	char dir[10];
-	for(m=0;m<NK;m++) {
-		sprintf(dir,"k%d",m);
-		mkdir(dir,0777);
 	}
-	
-	initphi(p);
-	return;
 }
+
 void restart(parameters *p) {
 	FILE *fp;
 	double ru,iu,rv,iv,rd,id,vx,vy,d,x;
@@ -198,32 +155,36 @@ void free_field(Field *fld) {
 }
 
 
-void initphi(parameters *p) {
-	int j,m;
-	double re, im, dxre,dxim;
-	FILE *fp,*fpx;
-	char pystr[50];
+void initphi(Field *fld) {
+	int i,j;
+	double rad, xs;
+	double complex *cphi = (double complex *)malloc(sizeof(double complex)*NTOC);
+	double *rphi = (double *)cphi;
+	double complex *cdxphi = (double complex *)malloc(sizeof(double complex)*NTOC);
+	double *rdxphi = (double *)cdxphi;
 	
-	sprintf(pystr,"python fftpot.py %lg %lg %lg %d %d %d -1",p->xsoft,p->Lx,p->Ly,p->Nx,p->Ny,NK);
-	system(pystr);
-	
-	fp = fopen("ftpot.dat","r");
-	fpx = fopen("dxftpot.dat","r");
-	
-	for(j=NG;j<p->Nx+NG;j++) {
-		for(m=0;m<NK;m++) {
-			fscanf(fp,"%lg %lg",&re,&im);
-			fscanf(fpx,"%lg %lg",&dxre,&dxim);
-			PHI(m) = p->Mp*(re+I*im);
-			DXPHI(m) = p->Mp*(dxre+I*dxim);
+	for(i=0;i<Nx;i++) {
+		for(j=0;j<NR;j++) {
+			if (j<Ny) {
+				xs = x[i]*x[i] + (fld->Params->xs)*(fld->Params->xs);
+				rad = y[j]*y[j]+xs;
+				rphi[j+i*NR] = -(fld->Params->Mp)/sqrt(rad);
+				rdxphi[j+i*NR] = (fld->Params->Mp)*xs*pow(rad,-1.5);
+			}
+			else {
+				rphi[j+i*NR]=0;
+				rdxphi[j+i*NR] = 0;
+			}
 		}
 	}
-	fclose(fp); fclose(fpx);
-
-#ifdef OUTPHI
-	write_phi(p);
-#endif	
+	fft_phi(rphi,cphi);
+	fft_dxphi(rdxphi,cdxphi);
 	
+	
+	memcpy(fld->phi,cphi,sizeof(double complex)*NTOTC);
+	memcpy(fld->dxphi,cdxphi,sizeof(double complex)*NTOTC);
+
+	free(cphi); free(cdxphi);
 	return;
 
 }
