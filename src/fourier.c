@@ -124,15 +124,17 @@ void fft_free(void) {
 
 }
 
-fft_phi(double *rphi, double complex *cphi) {
+void fft_phi(double *rphi, double complex *cphi) {
 	memcpy(wr1,rphi,sizeof(double)*NTOTR);
 	fftw_execute(r2c1);
 	memcpy(cphi,wc1,sizeof(double complex)*NTOTC);
 	return;
 }
-fft_dxphi(double *rdxphi, double complex *cdxphi) {
+void fft_dxphi(double *rdxphi, double complex *cdxphi) {
 	memcpy(wr1,rdxphi,sizeof(double)*NTOTR);
 	fftw_execute(r2c1);
 	memcpy(cdxphi,wc1,sizeof(double complex)*NTOTC);
 	return;
 }
+
+

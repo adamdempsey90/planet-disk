@@ -86,3 +86,6 @@ double complex calc_pot(double complex phi,double t, double tau) {
 	else return (1-exp(-t/tau))*phi;
 	
 }
+
+
+

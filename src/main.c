@@ -4,13 +4,13 @@ int main (void) {
 	double time=0;
  	double *y;
   
-	(Field *fld) = (Field *)malloc(sizeof(Field));
+	Field *fld = (Field *)malloc(sizeof(Field));
 	fld->Params = (Parameters *)malloc(sizeof(Parameters));
 	
-	read_input(fld);
+	read_input(fld->Params);
 	allocate_field(fld);
 	init(fld);
-
+	output_coords(fld);
 	y = (double *)malloc(sizeof(double)*NTOTR);
 
 
@@ -48,11 +48,6 @@ int main (void) {
                                            &h, y);
        dt = t-dt;
 
-#ifdef WAVEKILLBC
-       r_2_c(y,P->cy,P->Nx);
-	   wavekillbc(P,dt);
-	   c_2_r(y,P->cy,P->Nx);
-#endif
 
 	   printf ("step size = %.5e, at t=%.5e \n", dt, t);
       if (status != GSL_SUCCESS)
@@ -65,8 +60,7 @@ int main (void) {
 
 		global_r2c(y,fld);
 		
-		calcTwd(P, floor(t));
-		output_func(P,floor(t));
+		output(fld,floor(t));
       	i++;
      }
     }
@@ -75,7 +69,6 @@ int main (void) {
   gsl_odeiv2_control_free (c);
   gsl_odeiv2_step_free (s);
 	
-#endif	
 	
   free(y); 
   free_field(fld);

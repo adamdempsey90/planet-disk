@@ -41,32 +41,32 @@ void init(Field *fld) {
 	}
 }
 
-void restart(parameters *p) {
-	FILE *fp;
-	double ru,iu,rv,iv,rd,id,vx,vy,d,x;
-	int j;
-
-//	fp=fopen("restart.txt","r");
-	fp=fopen(p->restartfname,"r");
-	j=NG;
-	while (!feof(fp)) {
-//   		if (fscanf(fp, "%lg %lg %lg %lg %lg %lg %lg %lg %lg %lg", &x, &ru, &iu, &rv, 
-//   					&iv, &rd, &id, &vx, &vy, &d) != 10)   break;
-//		if (fscanf(fp,"%lg",&d) != 1) break;
-		if (fscanf(fp,"%lg %lg %lg %lg",&x,&d,&vx,&vy) != 4) break;
-//		XCORD = x;
-//		UVEL = ru + I*iu;
-//		VVEL = rv + I*iv;
-//		SIG = rd + I*id;
-		VXBAR = vx;
-		VYBAR = vy;
-		DBAR = d;
-		j++;
-	}
-	
-	fclose(fp);
-	return;
-}
+// void restart(parameters *p) {
+// 	FILE *fp;
+// 	double ru,iu,rv,iv,rd,id,vx,vy,d,x;
+// 	int j;
+// 
+// //	fp=fopen("restart.txt","r");
+// 	fp=fopen(p->restartfname,"r");
+// 	j=NG;
+// 	while (!feof(fp)) {
+// //   		if (fscanf(fp, "%lg %lg %lg %lg %lg %lg %lg %lg %lg %lg", &x, &ru, &iu, &rv, 
+// //   					&iv, &rd, &id, &vx, &vy, &d) != 10)   break;
+// //		if (fscanf(fp,"%lg",&d) != 1) break;
+// 		if (fscanf(fp,"%lg %lg %lg %lg",&x,&d,&vx,&vy) != 4) break;
+// //		XCORD = x;
+// //		UVEL = ru + I*iu;
+// //		VVEL = rv + I*iv;
+// //		SIG = rd + I*id;
+// 		VXBAR = vx;
+// 		VYBAR = vy;
+// 		DBAR = d;
+// 		j++;
+// 	}
+// 	
+// 	fclose(fp);
+// 	return;
+// }
 
 
 
@@ -97,6 +97,7 @@ void allocate_field(Field *fld) {
 	fld->dtv = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->dtsig = (double complex *)malloc(sizeof(double complex)*NTOTC);	
 	
+
 	fld->phi = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->dxphi = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	
@@ -111,9 +112,9 @@ void allocate_field(Field *fld) {
 	fld->Tens->divPix = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->Tens->divPiy = (double complex *)malloc(sizeof(double complex)*NTOTC);
 
-	vx = (double *)u;
-	vy = (double *)v;
-	dens = (double *)sig;
+	fld->vx = (double *)(fld->u);
+	fld->vy = (double *)(fld->v);
+	fld->dens = (double *)(fld->sig);
 
 	return;
 }
@@ -166,16 +167,16 @@ void free_field(Field *fld) {
 void initphi(Field *fld) {
 	int i,j;
 	double rad, xs;
-	double complex *cphi = (double complex *)malloc(sizeof(double complex)*NTOC);
+	double complex *cphi = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	double *rphi = (double *)cphi;
-	double complex *cdxphi = (double complex *)malloc(sizeof(double complex)*NTOC);
+	double complex *cdxphi = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	double *rdxphi = (double *)cdxphi;
 	
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<NR;j++) {
 			if (j<Ny) {
-				xs = x[i]*x[i] + (fld->Params->xs)*(fld->Params->xs);
-				rad = y[j]*y[j]+xs;
+				xs = (fld->x[i])*(fld->x[i]) + (fld->Params->xs)*(fld->Params->xs);
+				rad = (fld->y[j])*(fld->y[j])+xs;
 				rphi[j+i*NR] = -(fld->Params->Mp)/sqrt(rad);
 				rdxphi[j+i*NR] = (fld->Params->Mp)*xs*pow(rad,-1.5);
 			}
@@ -224,3 +225,5 @@ void initphi(Field *fld) {
 // 
 // 
 // }
+
+
