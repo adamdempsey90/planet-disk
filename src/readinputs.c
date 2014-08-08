@@ -1,21 +1,24 @@
 #include "planetdisk.h" 
-void read_input(Parameters *p) { 
-	 p->Nx = 2048;
-	 p->Ny = 512;
-	 p->Lx = 120.0;
-	 p->Ly = 30.0;
-	 p->xsoft = .6;
-	 p->c = 1;
-	 p->Mp = .5;
-	 p->nu = 0.0024;
-	 p->q = 1.5;
-	 p->omega = 1.0;
-	 p->t0 = 0;
-	 p->tau = 0;
-	 p->endt = 100;
-	 p->numf = 100;
-	 sprintf(p->restartfname,"newm0.5nu0.0024_lx60_means.dat");
-	 p->dx=(p->Lx)/(p->Nx);
 
-	 return; 
+void read_input(Field *fld) { 
+	fld->Params->Nx = 1024;
+	fld->Params->Ny = 16;
+	Nx = fld->Params->Nx;
+	Ny = fld->Params->Ny;
+	fld->Params->Lx = 120.0;
+	fld->Params->Ly = 30.0;
+	fld->Params->xs = .6;
+	fld->Params->c = 1;
+	fld->Params->Mp = .5;
+	fld->Params->nu = 0.0024;
+	fld->Params->q = 1.5;
+	fld->Params->omega = 1.0;
+	fld->Params->sig0 = 1.0;
+	fld->Params->t0 = 0;
+	fld->Params->tau = 0;
+	fld->Params->endt = 100;
+	fld->Params->numf = 100;
+	sprintf(fld->Params->restartfname,"newm0.5nu0.0024_lx60_means.dat");
+	fld->Params->dx=(fld->Params->Lx)/(fld->Params->Nx);
+	return; 
 }

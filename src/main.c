@@ -1,20 +1,28 @@
 #include "planetdisk.h"
+
 int main (void) {
 	int i;
 	double time=0;
  	double *y;
-  
+
+	printf("Welcome to the planet disk code...\n");
+	printf("Reading Inputs...\n");
+	printf("Initializing data structures...\n");
 	Field *fld = (Field *)malloc(sizeof(Field));
 	fld->Params = (Parameters *)malloc(sizeof(Parameters));
-	
-	read_input(fld->Params);
+
+	init_derivs();	
+	read_input(fld);
 	allocate_field(fld);
+	printf("Initializing FFTW...\n");
+	init_fft();
+	printf("Initializing Field...\n");
 	init(fld);
+	printf("Outputting Coordinates...\n");
 	output_coords(fld);
+	
+	printf("Defining the ODE System...\n");
 	y = (double *)malloc(sizeof(double)*NTOTR);
-
-
-
 
 	gsl_odeiv2_system sys = {func, NULL, NTOTR, fld};
 
@@ -36,7 +44,7 @@ int main (void) {
   
   
 //	output_derivs(P);
-
+	printf("Starting the Time Loop...\n");
   while (t < t1)
     {
       
@@ -72,6 +80,6 @@ int main (void) {
 	
   free(y); 
   free_field(fld);
-  free_fft(); 
+  fft_free(); 
   return 0;
 }

@@ -5,12 +5,29 @@ void init(Field *fld) {
 	double Lx = fld->Params->Lx;
 	double Ly = fld->Params->Ly;
 	
+	printf("\t Initializing Coordinates...\n");
 	for(i=0;i<Nx;i++) fld->x[i] = (i+.5)*(Lx/Nx);
 	for(i=0;i<Ny;i++) fld->y[i] = -.5*Ly + (i+.5)*(Ly/Ny);
-	for(i=0;i<NC;i++) fld->k[i]= i*(M_PI*2/Ly);
-	
+	printf("\t Initializing Boundary Conditions...\n");
+	for(i=0;i<NC;i++) {
+		fld->k[i]= i*(M_PI*2/Ly);
+		fld->ubc[i] = 0;
+		fld->vbc[i] = 0;
+		fld->Tens->Pixybc[i] = 0;
+
+		if (i==0) {
+			fld->sigbc[i] = fld->Params->sig0;
+			fld->Tens->Pixxbc[i] = -(fld->Params->c)*(fld->Params->c)*(fld->Params->sig0);
+			fld->Tens->Piyybc[i] = -(fld->Params->c)*(fld->Params->c)*(fld->Params->sig0);
+		}
+		else {
+			fld->sigbc[i] = 0;
+			fld->Tens->Pixxbc[i] = 0;
+			fld->Tens->Piyybc[i] = 0;
+		}
+	}
+	printf("\t Initializing Gravitational Potential...\n");
 	initphi(fld);
-	
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<NC;j++) {
 			fld->u[CINDX] = 0;
@@ -71,6 +88,60 @@ void init(Field *fld) {
 
 
 
+void init_derivs(void) {
+
+	int i;
+	Derivative deriv;
+	for(i=-NG;i<=NG;i++) {
+		if (i!=0) deriv.ind[i] = i;
+	}
+#ifdef SECDERIV	
+	deriv.coeffs[0] = -0.5;
+	deriv.coeffs[1] = 0.5; 
+#endif
+
+#ifdef FOURTHDERIV
+	deriv.coeffs[0] = 1.0/12;
+	deriv.coeffs[1] = -2.0/3;
+	deriv.coeffs[2] = 2.0/3;
+	deriv.coeffs[3] = -1.0/12;	
+#endif
+
+#ifdef SIXTHDERIV
+	deriv.coeffs[0] = -1.0/60;
+	deriv.coeffs[1] = 3.0/20;
+	deriv.coeffs[2] = -0.75;
+	deriv.coeffs[3] = 0.75;
+	deriv.coeffs[4] = -3.0/20;
+	deriv.coeffs[5] = 1.0/60;
+#endif
+
+#ifdef EIGTHDERIV
+	deriv.coeffs[0] = 1.0/280;
+	deriv.coeffs[1] = -4.0/105;
+	deriv.coeffs[2] = 1.0/5;
+	deriv.coeffs[3] = -4.0/5;
+	deriv.coeffs[4] = 4.0/5;
+	deriv.coeffs[5] = -1.0/5;
+	deriv.coeffs[6] = 4.0/105;
+	deriv.coeffs[7] = -1.0/280;
+#endif
+
+#ifdef TENTHDERIV
+	deriv.coeffs[0] = -2.0/2520;
+	deriv.coeffs[1] = 25.0/2520;
+	deriv.coeffs[2] = -150.0/2520;
+	deriv.coeffs[3] = 600.0/2520;
+	deriv.coeffs[4] = -2100.0/2520;
+	deriv.coeffs[5] = 2100.0/2520;
+	deriv.coeffs[6] = -600.0/2520;
+	deriv.coeffs[7] = 150.0/2520;
+	deriv.coeffs[8] = -25.0/2520;
+	deriv.coeffs[9] = 2.0/2520;
+#endif
+
+	return;
+}
 
 void allocate_field(Field *fld) {
 
@@ -97,6 +168,10 @@ void allocate_field(Field *fld) {
 	fld->dtv = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->dtsig = (double complex *)malloc(sizeof(double complex)*NTOTC);	
 	
+	fld->ubc = (double complex *)malloc(sizeof(double complex)*NC);
+	fld->vbc = (double complex *)malloc(sizeof(double complex)*NC);
+	fld->sigbc = (double complex *)malloc(sizeof(double complex)*NC);
+
 
 	fld->phi = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->dxphi = (double complex *)malloc(sizeof(double complex)*NTOTC);
@@ -109,6 +184,10 @@ void allocate_field(Field *fld) {
 	fld->Tens->Pixy = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->Tens->Piyy = (double complex *)malloc(sizeof(double complex)*NTOTC);
 
+	fld->Tens->Pixxbc = (double complex *)malloc(sizeof(double complex)*NC);
+	fld->Tens->Pixybc = (double complex *)malloc(sizeof(double complex)*NC);
+	fld->Tens->Piyybc = (double complex *)malloc(sizeof(double complex)*NC);
+	
 	fld->Tens->divPix = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->Tens->divPiy = (double complex *)malloc(sizeof(double complex)*NTOTC);
 
@@ -135,7 +214,11 @@ void free_field(Field *fld) {
 	
 	free(fld->dyu);
 	free(fld->dyv);
-	free(fld->dysig);		
+	free(fld->dysig);	
+	
+	free(fld->ubc); 
+	free(fld->vbc);
+	free(fld->sigbc);	
 
 	free(fld->dtu);
 	free(fld->dtv);
@@ -152,6 +235,10 @@ void free_field(Field *fld) {
 	free(fld->Tens->Pixy);
 	free(fld->Tens->Piyy);
 
+	free(fld->Tens->Pixxbc);
+	free(fld->Tens->Pixybc);
+	free(fld->Tens->Piyybc);
+	
 	free(fld->Tens->divPix);
 	free(fld->Tens->divPiy);
 
@@ -167,33 +254,30 @@ void free_field(Field *fld) {
 void initphi(Field *fld) {
 	int i,j;
 	double rad, xs;
-	double complex *cphi = (double complex *)malloc(sizeof(double complex)*NTOTC);
-	double *rphi = (double *)cphi;
-	double complex *cdxphi = (double complex *)malloc(sizeof(double complex)*NTOTC);
-	double *rdxphi = (double *)cdxphi;
+	double *rphi = (double *)malloc(sizeof(double)*NTOTR);
+	double *rdxphi = (double *)malloc(sizeof(double)*NTOTR);
 	
+
+
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<NR;j++) {
 			if (j<Ny) {
 				xs = (fld->x[i])*(fld->x[i]) + (fld->Params->xs)*(fld->Params->xs);
 				rad = (fld->y[j])*(fld->y[j])+xs;
-				rphi[j+i*NR] = -(fld->Params->Mp)/sqrt(rad);
-				rdxphi[j+i*NR] = (fld->Params->Mp)*xs*pow(rad,-1.5);
+				rphi[RINDX] = -(fld->Params->Mp)/sqrt(rad);
+				rdxphi[RINDX] = (fld->Params->Mp)*xs*pow(rad,-1.5);
 			}
 			else {
-				rphi[j+i*NR]=0;
-				rdxphi[j+i*NR] = 0;
+				rphi[RINDX]=0;
+				rdxphi[RINDX] = 0;
 			}
 		}
 	}
-	fft_phi(rphi,cphi);
-	fft_dxphi(rdxphi,cdxphi);
+	fft_phi(rphi,fld->phi);
+	fft_dxphi(rdxphi,fld->dxphi);
 	
-	
-	memcpy(fld->phi,cphi,sizeof(double complex)*NTOTC);
-	memcpy(fld->dxphi,cdxphi,sizeof(double complex)*NTOTC);
 
-	free(cphi); free(cdxphi);
+	free(rphi); free(rdxphi);
 	return;
 
 }

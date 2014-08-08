@@ -1,7 +1,7 @@
 CC=gcc-4.9
 CFLAGS= 
 LDFLAGS=-lgsl -lgslcblas -lgomp -fopenmp -lfftw3 -lm 
-SOURCES=algo.c boundary.c fourier.c init.c main.c output.c readinputs.c utils.c viscosity.c
+SOURCES=algo.c fourier.c init.c main.c output.c readinputs.c utils.c viscosity.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=planetdisk
 
@@ -14,6 +14,6 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm $(OBJECTS) 
+	rm $(OBJECTS) $(EXECUTABLE)
 
 

@@ -69,7 +69,7 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 }
 
 
-void init_fft(int Nx, int Ny) {
+void init_fft(void) {
 	int i,j,Nmax;
 	wc1 = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	wr1 = (double *)wc1;

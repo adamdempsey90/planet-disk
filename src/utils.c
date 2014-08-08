@@ -12,7 +12,7 @@ void global_c2r(double *y, Field *fld) {
 
 
 }
-void global_r2c(double *y, Field *fld) {
+void global_r2c(const double *y, Field *fld) {
 /* Used to unpack the real gsl y array into the complex u,v,sig arrays */
 
 	memcpy(fld->u,(double complex *)&y[0],sizeof(double complex)*NTOTC);
@@ -40,18 +40,18 @@ void calc_deriv(double complex *in, double complex *dxout, double complex *dyout
 		for(i=0;i<Nx;i++) {
 			for(j=0;j<NC;j++) { 
 				for(d=0;d<2*NG;d++) {
-					ind = i + deriv_ind[d];
+					ind = i + deriv.ind[d];
 					if (ind < 0) {		// Left B.C 
 						if (strcmp("odd",lbc)==0)
-							dxout[CINDX] += -in[j-NC*(1+ind)]*deriv_coeffs[d];
+							dxout[CINDX] += -conj(in[j-NC*(1+ind)])*deriv.coeffs[d];
 						else 
-							dxout[CINDX] += in[j-NC*(1+ind)]*deriv_coeffs[d];
+							dxout[CINDX] += conj(in[j-NC*(1+ind)])*deriv.coeffs[d];
 					}
 					else if (ind > Nx-1) {		// Right B.C
-						dxout[CINDX] += rbc[j]*deriv_coeffs[d];
+						dxout[CINDX] += rbc[j]*deriv.coeffs[d];
 					}
 					else {
-						dxout[CINDX] += in[j+NC*(i+deriv_ind[d])]*deriv_coeffs[d];
+						dxout[CINDX] += in[j+NC*ind]*deriv.coeffs[d];
 					}
 	
 				}						

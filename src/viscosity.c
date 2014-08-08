@@ -38,9 +38,10 @@ void add_visc(Field *fld) {
 	int i;
 
 /* Calculate div(Pi) */	
-	calc_deriv(fld->u,fld->dxu,NULL,"odd",fld->ubc,fld->dx);
-	calc_deriv(fld->Tens->Pixx,fld->Tens->divPix,NULL,"even",fld->Pixxbc,fld->dx);
-	calc_deriv(fld->Tens->Pixy,fld->Tens->divPiy,NULL,"even",fld->Pixybc,fld->dx);
+	calc_deriv(fld->Tens->Pixx,fld->Tens->divPix,NULL,
+						fld->Params->dx,fld->k,"even",fld->Tens->Pixxbc);
+	calc_deriv(fld->Tens->Pixy,fld->Tens->divPiy,NULL,
+						fld->Params->dx,fld->k,"even",fld->Tens->Pixybc);
 	
 	for(i=0;i<NTOTC;i++) {
 		fld->Tens->divPix[i] += I*(fld->k[i])*(fld->Tens->Pixy[i]);
@@ -49,8 +50,8 @@ void add_visc(Field *fld) {
 
 /* Convolve with 1/Sigma */
 
-	convolve_inv(fld->sig,fld->Tens->divPix,fld->dtu);
-	convolve_inv(fld->sig,fld->Tens->divPiy,fld->dtv);
+	convolve_inv(fld->sig,fld->Tens->divPix,fld->dtu,1);
+	convolve_inv(fld->sig,fld->Tens->divPiy,fld->dtv,1);
 	
 	return;
 }
