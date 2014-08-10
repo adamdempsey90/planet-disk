@@ -3,7 +3,7 @@ SOURCES=algo.c fourier.c init.c main.c output.c readinputs.c utils.c viscosity.c
 
 LDFLAGS=-lgsl -lgslcblas -lgomp -fopenmp -lfftw3 -lm 
 
-CFLAGS=-c -Iinc
+CFLAGS=-c -Wall -Iinc
 
 BIN=bin/
 SRC=src/
@@ -18,7 +18,7 @@ COBJECTS=$(addprefix $(BIN),$(OBJECTS))
 all: $(CSOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(COBJECTS)
-	$(CC) $(LDFLAGS) $(COBJECTS) -o $@
+	$(CC)  $(COBJECTS) $(LDFLAGS) -o $@
 
 $(BIN)%.o: $(SRC)%.c
 	$(CC) $(CFLAGS) $< -o $@

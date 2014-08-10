@@ -2,7 +2,6 @@
 
 int main (void) {
 	int i;
-	double time=0;
  	double *y;
 
 	printf("Welcome to the planet disk code...\n");
@@ -12,6 +11,7 @@ int main (void) {
 	fld->Params = (Parameters *)malloc(sizeof(Parameters));
 
 	init_derivs();	
+	printf("Reading Inputs...\n");
 	read_input(fld);
 	allocate_field(fld);
 	printf("Initializing FFTW...\n");
@@ -22,7 +22,7 @@ int main (void) {
 //	output_coords(fld);
 	
 	printf("Defining the ODE System...\n");
-	y = (double *)malloc(sizeof(double)*NTOTR);
+	y = (double *)malloc(sizeof(double)*3*NTOTR);
 
 	gsl_odeiv2_system sys = {func, NULL, NTOTR, fld};
 
@@ -30,9 +30,9 @@ int main (void) {
 	
 	const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
 
-  	gsl_odeiv2_step * s  = gsl_odeiv2_step_alloc (T, NTOTR);
+  	gsl_odeiv2_step * s  = gsl_odeiv2_step_alloc (T, 3*NTOTR);
  	gsl_odeiv2_control * c  = gsl_odeiv2_control_y_new (1e-8, 1e-8);
- 	gsl_odeiv2_evolve * e  = gsl_odeiv2_evolve_alloc (NTOTR);
+ 	gsl_odeiv2_evolve * e  = gsl_odeiv2_evolve_alloc (3*NTOTR);
  
  
 

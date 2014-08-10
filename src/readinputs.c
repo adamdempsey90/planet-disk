@@ -1,24 +1,56 @@
 #include "planetdisk.h" 
 
-void read_input(Field *fld) { 
-	fld->Params->Nx = 1024;
-	fld->Params->Ny = 16;
-	Nx = fld->Params->Nx;
-	Ny = fld->Params->Ny;
-	fld->Params->Lx = 120.0;
-	fld->Params->Ly = 30.0;
-	fld->Params->xs = .6;
-	fld->Params->c = 1;
-	fld->Params->Mp = .5;
-	fld->Params->nu = 0.0024;
-	fld->Params->q = 1.5;
-	fld->Params->omega = 1.0;
-	fld->Params->sig0 = 1.0;
-	fld->Params->t0 = 0;
-	fld->Params->tau = 0;
-	fld->Params->endt = 1e-8;
-	fld->Params->numf = 1;
-	sprintf(fld->Params->restartfname,"newm0.5nu0.0024_lx60_means.dat");
-	fld->Params->dx=(fld->Params->Lx)/(fld->Params->Nx);
-	return; 
+void read_input(Field *fld) {
+	FILE *f;
+	char garbage[100];
+	
+	f=fopen("params.in","r");
+	fgets(garbage,sizeof(garbage),f);
+	fscanf(f,"Nx = %d \n",&fld->Params->Nx);
+	fscanf(f,"Ny = %d \n",&fld->Params->Ny); 
+	fscanf(f,"Lx = %lg \n",&fld->Params->Lx);
+	fscanf(f,"Ly =  %lg \n",&fld->Params->Ly);
+	fscanf(f,"xsoft =  %lg \n",&fld->Params->xs);
+	fscanf(f,"c =  %lg \n",&fld->Params->c);
+	fscanf(f,"Mp =  %lg \n",&fld->Params->Mp);
+	fscanf(f,"nu =  %lg \n",&fld->Params->nu);
+	fscanf(f,"q =  %lg \n",&fld->Params->q);
+	fscanf(f,"omega =  %lg \n",&fld->Params->omega);
+	fscanf(f,"sig0 =  %lg \n",&fld->Params->sig0);
+	fgets(garbage,sizeof(garbage),f);
+	fscanf(f,"t0 =  %lg \n",&fld->Params->t0);
+	fscanf(f,"tau =  %lg \n",&fld->Params->tau);
+	fscanf(f,"endt =  %lg \n",&fld->Params->endt);
+	fscanf(f,"numf =  %d \n",&fld->Params->numf);
+
+	fclose(f);
+
+  	printf("\tInput Parameters \n \
+  	  Nx = %d\n \
+  	  Ny = %d\n \
+  	  Lx = %lg\n \
+  	  Ly =  %lg\n \
+  	  xsoft =  %lg\n \
+  	  c =  %lg\n \
+  	  Mp =  %lg\n \
+  	  nu =  %lg\n \
+  	  q =  %lg\n \
+  	  omega =  %lg\n \
+  	  sig0 = %lg\n \
+  	  Time Parameters \n \
+  	  t0 =  %lg\n \
+  	  tau =  %lg\n \
+  	  endt =  %lg\n \
+  	  numf =  %d\n", 
+  	  fld->Params->Nx, fld->Params->Ny, fld->Params->Lx, fld->Params->Ly, fld->Params->xs, fld->Params->c, 
+  	  fld->Params->Mp, fld->Params->nu, fld->Params->q, fld->Params->omega, fld->Params->sig0,
+  	  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf);
+  	
+  	Nx = fld->Params->Nx;
+  	Ny = fld->Params->Ny;
+  	fld->Params->dx = (fld->Params->Lx/Nx);
+  	
+	return;
+
+
 }

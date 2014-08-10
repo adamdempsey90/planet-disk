@@ -45,7 +45,7 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 			mult is a constant multiplication factor 
 */
 
-	int i,j;
+	int i;
 
 /* De-alias with 2/3 truncation rule */	
 	for(i=0;i<NTOTC;i++) {wc1[i] = mask[i]*mult/q1[i]; wc2[i] = q2[i]*mask[i];}
