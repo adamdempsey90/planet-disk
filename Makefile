@@ -1,18 +1,27 @@
+EXECUTABLE=planetdisk
+SOURCES=algo.c fourier.c init.c main.c output.c readinputs.c utils.c viscosity.c
+
+LDFLAGS=-lgsl -lgslcblas -lgomp -fopenmp -lfftw3 -lm 
+
+CFLAGS=-c -Iinc
+
+BIN=bin/
+SRC=src/
+
 CC=gcc
-CFLAGS=-c -Wall -O3 
-LDFLAGS=-lgsl -lgslcblas -lm -lgomp -fopenmp
-SOURCES=algo.c derivs.c output.c utils.c amf.c init.c readinputs.c viscosity.c boundary.c main.c restart.c
+
+#!!!!!DO NOT EDIT ANYTHING UNDER THIS LINE!!!!!
 OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE=meanwave
+CSOURCES=$(addprefix $(SRC),$(SOURCES))
+COBJECTS=$(addprefix $(BIN),$(OBJECTS))
 
-all: $(SOURCES) $(EXECUTABLE)
-	
-$(EXECUTABLE): $(OBJECTS) 
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+all: $(CSOURCES) $(EXECUTABLE)
 
-.cpp.o:
+$(EXECUTABLE): $(COBJECTS)
+	$(CC) $(LDFLAGS) $(COBJECTS) -o $@
+
+$(BIN)%.o: $(SRC)%.c
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm $(OBJECTS) $(EXECUTABLE)
-
+	rm $(COBJECTS) $(EXECUTABLE)

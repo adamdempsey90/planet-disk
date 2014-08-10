@@ -119,6 +119,7 @@ void output_coords(Field *fld);
 void read_input(Field *fld);
 void global_c2r(double *y, Field *fld);
 void global_r2c(const double *y, Field *fld);
+void global_c2r_dt(double *y, Field *fld);
 void calc_deriv(double complex *in, double complex *dxout, double complex *dyout
 					, double dx, double *k, char *lbc, double complex *rbc);
 void visc_tens(Field *fld);

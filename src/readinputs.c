@@ -16,8 +16,8 @@ void read_input(Field *fld) {
 	fld->Params->sig0 = 1.0;
 	fld->Params->t0 = 0;
 	fld->Params->tau = 0;
-	fld->Params->endt = 100;
-	fld->Params->numf = 100;
+	fld->Params->endt = 1e-8;
+	fld->Params->numf = 1;
 	sprintf(fld->Params->restartfname,"newm0.5nu0.0024_lx60_means.dat");
 	fld->Params->dx=(fld->Params->Lx)/(fld->Params->Nx);
 	return; 

@@ -3,18 +3,29 @@
 
 int func (double t, const double y[], double f[],void *params) {
 
+	printf("Function Called at time = %lg...\n",t);
 	Field *fld = (Field *)params;
 
 /*	Get the new u,v,sig */	
+	printf("Copy Data...\n");
+
 	global_r2c(y, fld);
 
 /* Calculate the RHS */	
+	printf("Fill RHS...\n");
+
 	fill_rhs(fld,t);
 
 /* Copy complex data into real array with u,v,sig all combined for gsl */
-	memcpy(&f[0],(double *)fld->dtu,sizeof(double complex)*NTOTC);
-	memcpy(&f[NTOTR],(double *)fld->dtv,sizeof(double complex)*NTOTC);
-	memcpy(&f[2*NTOTR],(double *)fld->dtsig,sizeof(double complex)*NTOTC);
+	printf("Copy Data to GSL...\n");
+
+// 	memcpy(&f[0],(double *)fld->dtu,sizeof(double complex)*NTOTC);
+// 	memcpy(&f[NTOTR],(double *)fld->dtv,sizeof(double complex)*NTOTC);
+// 	memcpy(&f[2*NTOTR],(double *)fld->dtsig,sizeof(double complex)*NTOTC);
+
+	global_c2r_dt(f,fld);
+	
+	printf("Finished Function Call...\n");
 
 	return  GSL_SUCCESS; 
 
@@ -28,11 +39,15 @@ void fill_rhs(Field *fld, double t) {
 	double k;
 
 /* Fill the derivative arrays */
+	printf("\tCalculating Derivatives...\n");
+
 	calc_deriv(fld->u,fld->dxu,fld->dyu,fld->Params->dx,fld->k,"odd",fld->ubc);
 	calc_deriv(fld->v,fld->dxv,fld->dyv,fld->Params->dx,fld->k,"odd",fld->vbc);
 	calc_deriv(fld->sig,fld->dxsig,fld->dysig,fld->Params->dx,fld->k,"even",fld->sigbc);
 
 /*	Fill RHS arrays with any non-convolution terms*/	
+	printf("\tAdding Non-Convolution Terms...\n");
+
 	for(i=0;i<NTOTC;i++) {
 	
 #ifndef BACKEVOLVE
@@ -58,7 +73,8 @@ void fill_rhs(Field *fld, double t) {
 	}
 	
 /* Start adding the convolutions. */
-	
+	printf("\tAdding Convolution Terms...\n");
+
 	convolve(fld->u,fld->dxu,fld->dtu,-1);
 	convolve(fld->v,fld->dyu,fld->dtu,-1);
 	
@@ -71,6 +87,7 @@ void fill_rhs(Field *fld, double t) {
 	convolve(fld->dysig,fld->v,fld->dtsig,-1);
 	
 /* Add viscosity and pressure */
+	printf("\tAdding Viscosity...\n");
 	
 	add_visc(fld);
 	

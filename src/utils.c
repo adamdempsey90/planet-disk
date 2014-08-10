@@ -5,8 +5,19 @@ void global_c2r(double *y, Field *fld) {
 /* Used to pack the complex u,v,sig arrays into the real gsl y array  */
 	
 	memcpy(&y[0],(double *)fld->u,sizeof(double complex)*NTOTC);
-	memcpy(&y[NTOTC],(double *)fld->v,sizeof(double complex)*NTOTC);
-	memcpy(&y[2*NTOTC],(double *)fld->sig,sizeof(double complex)*NTOTC);
+	memcpy(&y[NTOTR],(double *)fld->v,sizeof(double complex)*NTOTC);
+	memcpy(&y[2*NTOTR],(double *)fld->sig,sizeof(double complex)*NTOTC);
+	
+	return;
+
+
+}
+void global_c2r_dt(double *y, Field *fld) {
+/* Used to pack the complex u,v,sig arrays into the real gsl y array  */
+	
+	memcpy(&y[0],(double *)fld->dtu,sizeof(double complex)*NTOTC);
+	memcpy(&y[NTOTR],(double *)fld->dtv,sizeof(double complex)*NTOTC);
+	memcpy(&y[2*NTOTR],(double *)fld->dtsig,sizeof(double complex)*NTOTC);
 	
 	return;
 

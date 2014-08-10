@@ -19,7 +19,7 @@ int main (void) {
 	printf("Initializing Field...\n");
 	init(fld);
 	printf("Outputting Coordinates...\n");
-	output_coords(fld);
+//	output_coords(fld);
 	
 	printf("Defining the ODE System...\n");
 	y = (double *)malloc(sizeof(double)*NTOTR);
@@ -43,23 +43,24 @@ int main (void) {
   i=1;
   
   
-//	output_derivs(P);
 	printf("Starting the Time Loop...\n");
+	printf("\t Starting Time = %lg \t Ending Time = %lg \n",t,t1);
   while (t < t1)
     {
       
-      dt = t;
+    dt = t;
 
-      int status = gsl_odeiv2_evolve_apply (e, c, s,
+    int status = gsl_odeiv2_evolve_apply (e, c, s,
                                            &sys, 
                                            &t, t1,
                                            &h, y);
-       dt = t-dt;
+    dt = t-dt;
 
-
-	   printf ("step size = %.5e, at t=%.5e \n", dt, t);
-      if (status != GSL_SUCCESS)
-          break;
+	printf ("step size = %.5e, at t=%.5e \n", dt, t);
+    if (status != GSL_SUCCESS) {
+     	printf("ERROR With Step...\nTerminating Run...\n");
+        break;
+    }
 
      
       
@@ -68,7 +69,7 @@ int main (void) {
 
 		global_r2c(y,fld);
 		
-		output(fld,floor(t));
+//		output(fld,floor(t));
       	i++;
      }
     }
