@@ -3,33 +3,54 @@
 void read_input(Field *fld) {
 	FILE *f;
 	char garbage[100];
+	double Lx,Ly,xs,c,Mp,nu,q,omega,sig0,t0,tau,endt;
+	int numf;
 	
-	f=fopen("params.in","r");
+	f=fopen("inputs/params.in","r");
+	if (f==NULL) printf("\n\nERROR Can't Find Input File!\n\n");
 	fgets(garbage,sizeof(garbage),f);
-	fscanf(f,"Nx = %d \n",&fld->Params->Nx);
-	fscanf(f,"Ny = %d \n",&fld->Params->Ny); 
-	fscanf(f,"Lx = %lg \n",&fld->Params->Lx);
-	fscanf(f,"Ly =  %lg \n",&fld->Params->Ly);
-	fscanf(f,"xsoft =  %lg \n",&fld->Params->xs);
-	fscanf(f,"c =  %lg \n",&fld->Params->c);
-	fscanf(f,"Mp =  %lg \n",&fld->Params->Mp);
-	fscanf(f,"nu =  %lg \n",&fld->Params->nu);
-	fscanf(f,"q =  %lg \n",&fld->Params->q);
-	fscanf(f,"omega =  %lg \n",&fld->Params->omega);
-	fscanf(f,"sig0 =  %lg \n",&fld->Params->sig0);
+	fscanf(f,"Nx = %d \n",&Nx);
+	fscanf(f,"Ny = %d \n",&Ny); 
+	fscanf(f,"Lx = %lg \n",&Lx);
+	fscanf(f,"Ly =  %lg \n",&Ly);
+	fscanf(f,"xsoft =  %lg \n",&xs);
+	fscanf(f,"c =  %lg \n",&c);
+	fscanf(f,"Mp =  %lg \n",&Mp);
+	fscanf(f,"nu =  %lg \n",&nu);
+	fscanf(f,"q =  %lg \n",&q);
+	fscanf(f,"omega =  %lg \n",&omega);
+	fscanf(f,"sig0 =  %lg \n",&sig0);
 	fgets(garbage,sizeof(garbage),f);
-	fscanf(f,"t0 =  %lg \n",&fld->Params->t0);
-	fscanf(f,"tau =  %lg \n",&fld->Params->tau);
-	fscanf(f,"endt =  %lg \n",&fld->Params->endt);
-	fscanf(f,"numf =  %d \n",&fld->Params->numf);
+	fscanf(f,"t0 =  %lg \n",&t0);
+	fscanf(f,"tau =  %lg \n",&tau);
+	fscanf(f,"endt =  %lg \n",&endt);
+	fscanf(f,"numf =  %d \n",&numf);
 
 	fclose(f);
+	
+	fld->Params->Nx = Nx;
+	fld->Params->Ny= Ny;
+	fld->Params->Lx = Lx; 
+	fld->Params->Ly = Ly; 
+	fld->Params->xs = xs;
+	fld->Params->c = c;
+	fld->Params->Mp = Mp;
+	fld->Params->nu = nu;
+	fld->Params->q = q;
+	fld->Params->omega = omega;
+	fld->Params->sig0 = sig0;
+	fld->Params->t0 = t0;
+	fld->Params->tau = tau;
+	fld->Params->endt = endt;
+	fld->Params->numf = numf;		
+  	fld->Params->dx = (fld->Params->Lx/Nx);
 
   	printf("\tInput Parameters \n \
   	  Nx = %d\n \
   	  Ny = %d\n \
   	  Lx = %lg\n \
   	  Ly =  %lg\n \
+  	  dx = %lg\n \
   	  xsoft =  %lg\n \
   	  c =  %lg\n \
   	  Mp =  %lg\n \
@@ -42,14 +63,10 @@ void read_input(Field *fld) {
   	  tau =  %lg\n \
   	  endt =  %lg\n \
   	  numf =  %d\n", 
-  	  fld->Params->Nx, fld->Params->Ny, fld->Params->Lx, fld->Params->Ly, fld->Params->xs, fld->Params->c, 
+  	  fld->Params->Nx, fld->Params->Ny, fld->Params->Lx, fld->Params->Ly, fld->Params->dx, fld->Params->xs, fld->Params->c, 
   	  fld->Params->Mp, fld->Params->nu, fld->Params->q, fld->Params->omega, fld->Params->sig0,
   	  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf);
-  	
-  	Nx = fld->Params->Nx;
-  	Ny = fld->Params->Ny;
-  	fld->Params->dx = (fld->Params->Lx/Nx);
-  	
+  
 	return;
 
 
