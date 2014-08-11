@@ -1,5 +1,6 @@
 #define WAVEEVOLVE
-#define SECDERIV
+#define TENTHDERIV
 #define OUTBC
 #define WAVEKILLBC
 #define LOWLEVEL
+#define OUTGHOST

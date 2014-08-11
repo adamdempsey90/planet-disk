@@ -1,9 +1,9 @@
 EXECUTABLE=planetdisk
-SOURCES=algo.c fourier.c init.c main.c output.c readinputs.c utils.c viscosity.c
+SOURCES=algo.c fourier.c boundary.c init.c main.c output.c readinputs.c utils.c viscosity.c
 
 LDFLAGS=-lgsl -lgslcblas -lgomp -fopenmp -lfftw3 -lm 
 
-CFLAGS=-c -Wall -Iinc
+CFLAGS=-c -Wall -O3 -Iinc
 
 BIN=bin/
 SRC=src/

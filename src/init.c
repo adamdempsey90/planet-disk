@@ -11,24 +11,12 @@ void init(Field *fld) {
 	printf("\t Initializing Boundary Conditions...\n");
 	for(i=0;i<NC;i++) {
 		fld->k[i]= i*(M_PI*2/Ly);
-		fld->ubc[i] = 0;
-		fld->vbc[i] = 0;
-		fld->Tens->Pixybc[i] = 0;
-
-		if (i==0) {
-			fld->sigbc[i] = fld->Params->sig0;
-			fld->Tens->Pixxbc[i] = -(fld->Params->c)*(fld->Params->c)*(fld->Params->sig0);
-			fld->Tens->Piyybc[i] = -(fld->Params->c)*(fld->Params->c)*(fld->Params->sig0);
-		}
-		else {
-			fld->sigbc[i] = 0;
-			fld->Tens->Pixxbc[i] = 0;
-			fld->Tens->Piyybc[i] = 0;
-		}
 	}
 	printf("\t Initializing Gravitational Potential...\n");
 	initphi(fld);
-	for(i=0;i<Nx;i++) {
+
+/* Set initial conditions here */
+	for(i=NG;i<Nx+NG;i++) {
 		for(j=0;j<NC;j++) {
 			fld->u[CINDX] = 0;
 			fld->v[CINDX] = 0;
@@ -56,6 +44,31 @@ void init(Field *fld) {
 
 		}
 	}
+	for(i=0;i<istart;i++) {
+		fld->dxu[i] = 0;
+		fld->dxv[i] = 0;
+		fld->dxsig[i] = 0;
+		fld->phi[i] = 0;
+		fld->dxphi[i] = 0;
+		fld->Tens->divPix[i] = 0;
+		fld->Tens->divPiy[i] = 0;
+		fld->Tens->Txx[i] = 0;
+		fld->Tens->Txy[i] = 0;
+		fld->Tens->Tyy[i] = 0;
+	}
+	for(i=iend;i<NTOTC;i++) {
+		fld->dxu[i] = 0;
+		fld->dxv[i] = 0;
+		fld->dxsig[i] = 0;
+		fld->phi[i] = 0;
+		fld->dxphi[i] = 0;
+		fld->Tens->divPix[i] = 0;
+		fld->Tens->divPiy[i] = 0;
+		fld->Tens->Txx[i] = 0;
+		fld->Tens->Txy[i] = 0;
+		fld->Tens->Tyy[i] = 0;
+	}
+	return;
 }
 
 // void restart(parameters *p) {
@@ -90,11 +103,14 @@ void init(Field *fld) {
 
 void init_derivs(void) {
 
-	int i;
-	Derivative deriv;
-	for(i=-NG;i<=NG;i++) {
-		if (i!=0) deriv.ind[i] = i;
+	int i, d;
+	for(i=-NG, d=0;i<=NG;i++) {
+		if (i!=0) {
+			deriv.ind[d] = i;
+			d++;
+		}
 	}
+	
 #ifdef SECDERIV	
 	deriv.coeffs[0] = -0.5;
 	deriv.coeffs[1] = 0.5; 
@@ -164,14 +180,9 @@ void allocate_field(Field *fld) {
 	fld->dyv = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->dysig = (double complex *)malloc(sizeof(double complex)*NTOTC);		
 
-	fld->dtu = (double complex *)malloc(sizeof(double complex)*NTOTC);
-	fld->dtv = (double complex *)malloc(sizeof(double complex)*NTOTC);
-	fld->dtsig = (double complex *)malloc(sizeof(double complex)*NTOTC);	
-	
-	fld->ubc = (double complex *)malloc(sizeof(double complex)*NC);
-	fld->vbc = (double complex *)malloc(sizeof(double complex)*NC);
-	fld->sigbc = (double complex *)malloc(sizeof(double complex)*NC);
-
+	fld->dtu = (double complex *)malloc(sizeof(double complex)*Nx*NC);
+	fld->dtv = (double complex *)malloc(sizeof(double complex)*Nx*NC);
+	fld->dtsig = (double complex *)malloc(sizeof(double complex)*Nx*NC);	
 
 	fld->phi = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->dxphi = (double complex *)malloc(sizeof(double complex)*NTOTC);
@@ -184,9 +195,6 @@ void allocate_field(Field *fld) {
 	fld->Tens->Pixy = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->Tens->Piyy = (double complex *)malloc(sizeof(double complex)*NTOTC);
 
-	fld->Tens->Pixxbc = (double complex *)malloc(sizeof(double complex)*NC);
-	fld->Tens->Pixybc = (double complex *)malloc(sizeof(double complex)*NC);
-	fld->Tens->Piyybc = (double complex *)malloc(sizeof(double complex)*NC);
 	
 	fld->Tens->divPix = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->Tens->divPiy = (double complex *)malloc(sizeof(double complex)*NTOTC);
@@ -215,10 +223,6 @@ void free_field(Field *fld) {
 	free(fld->dyu);
 	free(fld->dyv);
 	free(fld->dysig);	
-	
-	free(fld->ubc); 
-	free(fld->vbc);
-	free(fld->sigbc);	
 
 	free(fld->dtu);
 	free(fld->dtv);
@@ -234,10 +238,6 @@ void free_field(Field *fld) {
 	free(fld->Tens->Pixx);
 	free(fld->Tens->Pixy);
 	free(fld->Tens->Piyy);
-
-	free(fld->Tens->Pixxbc);
-	free(fld->Tens->Pixybc);
-	free(fld->Tens->Piyybc);
 	
 	free(fld->Tens->divPix);
 	free(fld->Tens->divPiy);
@@ -254,8 +254,8 @@ void free_field(Field *fld) {
 void initphi(Field *fld) {
 	int i,j;
 	double rad, xs;
-	double *rphi = (double *)malloc(sizeof(double)*NTOTR);
-	double *rdxphi = (double *)malloc(sizeof(double)*NTOTR);
+	double *rphi = (double *)malloc(sizeof(double)*Nx*NR);
+	double *rdxphi = (double *)malloc(sizeof(double)*Nx*NR);
 	
 
 

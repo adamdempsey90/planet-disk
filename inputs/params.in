@@ -1,11 +1,11 @@
 # Input Parameters
-Nx = 2048
-Ny = 512
-Lx = 120.0
+Nx = 512
+Ny = 64
+Lx = 50.0
 Ly = 30.0
 xsoft = .6
 c = 1 
-Mp = .5 
+Mp = .01 
 nu = 0.0024 
 q = 1.5 
 omega = 1.0
@@ -13,5 +13,5 @@ sig0 = 1.0
 # Time Parameters
 t0 = 0
 tau = 0
-endt = 100
-numf = 100
+endt = 1e-8
+numf = 1

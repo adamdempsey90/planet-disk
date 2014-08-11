@@ -15,23 +15,26 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 			mult is a constant multiplication factor 
 */
 
-	int i,j;
+	int i;
 
 /* De-alias with 2/3 truncation rule */	
-	for(i=0;i<NTOTC;i++) {wc1[i] = q1[i]*mask[i]*mult; wc2[i] = q2[i]*mask[i];}
+	for(i=0;i<NC*Nx;i++) {
+		wc1[i] = q1[i]*mask[i]*mult; 
+		wc2[i] = q2[i]*mask[i];
+	}
 
 /* FFT these to real space */	
 	fftw_execute(c2r1);
 	fftw_execute(c2r2);
 
 /* Form product in real space */
-	for(i=0;i<NTOTR;i++) wr3[i] = wr1[i]*wr2[i]/(Ny*Ny);
+	for(i=0;i<Nx*NR;i++) wr3[i] = wr1[i]*wr2[i]/(Ny*Ny);
 
 /* FFT back to complex space */
 	fftw_execute(r2c3);
 	
 /* add output */
-	for(i=0;i<NTOTC;i++) {
+	for(i=0;i<NC*Nx;i++) {
 		res[i] += wc3[i];
 	}	
 
@@ -48,20 +51,23 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 	int i;
 
 /* De-alias with 2/3 truncation rule */	
-	for(i=0;i<NTOTC;i++) {wc1[i] = mask[i]*mult/q1[i]; wc2[i] = q2[i]*mask[i];}
+	for(i=0;i<NC*Nx;i++) {
+		wc1[i] = mask[i]*q1[i]; 
+		wc2[i] = q2[i]*mask[i]*mult;
+	}
 
 /* FFT these to real space */	
 	fftw_execute(c2r1);
 	fftw_execute(c2r2);
 
 /* Form product in real space */
-	for(i=0;i<NTOTR;i++) wr3[i] = wr1[i]*wr2[i]/(Ny*Ny);
+	for(i=0;i<Nx*NR;i++) wr3[i] = wr2[i]/(wr1[i]*Ny*Ny);
 
 /* FFT back to complex space */
 	fftw_execute(r2c3);
 	
 /* add output */
-	for(i=0;i<NTOTC;i++) {
+	for(i=0;i<Nx*NC;i++) {
 		res[i] += wc3[i];
 	}	
 
@@ -71,13 +77,13 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 
 void init_fft(void) {
 	int i,j,Nmax;
-	wc1 = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	wc1 = (double complex *)malloc(sizeof(double complex)*Nx*NC);
 	wr1 = (double *)wc1;
-	wc2 = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	wc2 = (double complex *)malloc(sizeof(double complex)*Nx*NC);
 	wr2 = (double *)wc2;
-	wc3 = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	wc3 = (double complex *)malloc(sizeof(double complex)*Nx*NC);
 	wr3 = (double *)wc3;
-	mask = (double *)malloc(sizeof(double)*NTOTC);
+	mask = (double *)malloc(sizeof(double)*Nx*NC);
 	
 	Nmax = (2./3)*(NC-1);
 	
@@ -125,15 +131,15 @@ void fft_free(void) {
 }
 
 void fft_phi(double *rphi, double complex *cphi) {
-	memcpy(wr1,rphi,sizeof(double)*NTOTR);
+	memcpy(wr1,&rphi[NG*NR],sizeof(double)*Nx*NR);
 	fftw_execute(r2c1);
-	memcpy(cphi,wc1,sizeof(double complex)*NTOTC);
+	memcpy(&cphi[NG*NC],wc1,sizeof(double complex)*Nx*NC);
 	return;
 }
 void fft_dxphi(double *rdxphi, double complex *cdxphi) {
-	memcpy(wr1,rdxphi,sizeof(double)*NTOTR);
+	memcpy(wr1,&rdxphi[NG*NR],sizeof(double)*Nx*NR);
 	fftw_execute(r2c1);
-	memcpy(cdxphi,wc1,sizeof(double complex)*NTOTC);
+	memcpy(&cdxphi[NG*NC],wc1,sizeof(double complex)*Nx*NC);
 	return;
 }
 

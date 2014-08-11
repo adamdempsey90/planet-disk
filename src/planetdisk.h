@@ -44,8 +44,10 @@
 
 #define NC (Ny/2 + 1)
 #define NR 2*NC
-#define NTOTR  Nx*NR
-#define NTOTC Nx*NC
+#define NTOTR  (Nx+2*NG)*NR
+#define NTOTC (Nx+2*NG)*NC
+#define istart NG*NC
+#define iend (NG+Nx)*NC
 
 #define CINDX j+i*NC
 #define RINDX j+i*NR
@@ -67,7 +69,6 @@ typedef struct Stress {
 	double complex *Txx, *Txy, *Tyy;
 	double complex *Pixx, *Pixy, *Piyy;
 	double complex *divPix, *divPiy;
-	double complex *Pixxbc, *Pixybc, *Piyybc;
 
 } Stress;
 
@@ -84,7 +85,6 @@ typedef struct Field {
 	double complex *dxu, *dxv, *dxsig;
 	double complex *dyu, *dyv, *dysig;
 	double complex *dtu, *dtv, *dtsig;
-	double complex *ubc, *vbc, *sigbc; 
 	double complex *phi, *dxphi;
 	double *vx, *vy, *dens;
 		
@@ -98,7 +98,7 @@ typedef struct Derivative {
 
 } Derivative;
 		
-int Nx, Ny;
+int Nx, Ny, outnum, dxoutnum, func_calls, dtoutnum;
 Derivative deriv; 
 
 int func (double t, const double y[], double f[],void *params);
@@ -114,14 +114,17 @@ void init(Field *fld);
 void allocate_field(Field *fld);
 void free_field(Field *fld);
 void initphi(Field *fld);
-void output(Field *fld, double t);
+void output(Field *fld);
 void output_coords(Field *fld);
 void read_input(Field *fld);
 void global_c2r(double *y, Field *fld);
 void global_r2c(const double *y, Field *fld);
 void global_c2r_dt(double *y, Field *fld);
 void calc_deriv(double complex *in, double complex *dxout, double complex *dyout
-					, double dx, double *k, char *lbc, double complex *rbc);
+					, double dx, double *k);
 void visc_tens(Field *fld);
 void add_visc(Field *fld);
 void init_derivs(void);
+void output_derivs(Field *fld);
+void zero_derivs(Field *fld);
+void set_bc(Field *fld);

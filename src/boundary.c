@@ -2,26 +2,31 @@
 
 void set_bc(Field *fld) {
 /* Set the boundary conditions for the right boundary */
-	int i;
-	double c = (fld->Params->c)*(fld->Params->c);
-	double nuqom = (fld->Params->nu)*(fld->Params->omega)*(fld->Params->q);
+	int i,j, indx;
 	double sig0 = (fld->Params->sig0);
-	for(i=0;i<NC;i++) {
-		if(i==0) {
-			fld->sigbc[i] = sig0;
+	
+
+/* Zero B.C */	
+	for(i=0;i<NG;i++) {
+		for(j=0;j<NC;j++) {
+			indx = j+NC*(NG-1 + NG-i);
+			fld->u[CINDX] = -conj(fld->u[indx]);
+			fld->v[CINDX] = -conj(fld->v[indx]);
+			fld->sig[CINDX] = conj(fld->sig[indx]);
 		}
-		else {
-			fld->sigbc[i] = 0;
+	}	
+	
+	for(i=Nx+NG;i<Nx+2*NG;i++) {
+		for(j=0;j<NC;j++) {
+			fld->u[CINDX] = 0;
+			fld->v[CINDX] = 0;
+			
+			if(j==0) fld->sig[CINDX] = sig0;
+			else	fld->sig[CINDX] = 0;
+			
+
 		}
-		fld->ubc[i] = 0;
-		fld->vbc[i] = 0;
-		fld->Tens->Pixxbc[i] = -c*(fld->sigbc[i]);
-		fld->Tens->Pixybc[i] = -nuqom*(fld->sigbc[i]);
-		fld->Tens->Piyybc[i] = -c*(fld->sigbc[i]);
-		
 	}
 
 	return;
 }
-
-

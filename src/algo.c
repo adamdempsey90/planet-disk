@@ -3,6 +3,8 @@
 
 int func (double t, const double y[], double f[],void *params) {
 
+	func_calls++;
+	printf("\t\t # Function calls = %d \n",func_calls);
 //	printf("Function Called at time = %lg...\n",t);
 	Field *fld = (Field *)params;
 
@@ -11,6 +13,8 @@ int func (double t, const double y[], double f[],void *params) {
 
 	global_r2c(y, fld);
 
+	zero_derivs(fld);
+	set_bc(fld);
 /* Calculate the RHS */	
 //	printf("Fill RHS...\n");
 
@@ -33,64 +37,89 @@ int func (double t, const double y[], double f[],void *params) {
 }
 void fill_rhs(Field *fld, double t) {
 /* 		Fill the RHS of the EOM */
-	int i;
+	int i,j,indx;
 	double qom = (fld->Params->q)*(fld->Params->omega);
 	double om2 = 2*(fld->Params->omega);
-	double k;
-
+	double k,x;
+	double complex phi, dxphi;
+	
 /* Fill the derivative arrays */
 //	printf("\tCalculating Derivatives...\n");
 
-	calc_deriv(fld->u,fld->dxu,fld->dyu,fld->Params->dx,fld->k,"odd",fld->ubc);
-	calc_deriv(fld->v,fld->dxv,fld->dyv,fld->Params->dx,fld->k,"odd",fld->vbc);
-	calc_deriv(fld->sig,fld->dxsig,fld->dysig,fld->Params->dx,fld->k,"even",fld->sigbc);
+	calc_deriv(fld->u,fld->dxu,fld->dyu,fld->Params->dx,fld->k);
+	calc_deriv(fld->v,fld->dxv,fld->dyv,fld->Params->dx,fld->k);
+	calc_deriv(fld->sig,fld->dxsig,fld->dysig,fld->Params->dx,fld->k);
 
+	output_derivs(fld);
 /*	Fill RHS arrays with any non-convolution terms*/	
 //	printf("\tAdding Non-Convolution Terms...\n");
 
-	for(i=0;i<NTOTC;i++) {
-	
+	for(i=NG;i<Nx+NG;i++) {
+		indx = i-NG;
+		for(j=0;j<NC;j++) {
+			
 #ifndef BACKEVOLVE
-		if( fmod(i/(float)NC,1) != 0) {
+			if( j != 0) {
 #endif
 #ifndef WAVEEVOLVE 
-		if( fmod(i/(float)NC,1) == 0 ) {
+			if( j == 0 ) {
 #endif
 
-		k = fld->k[i];
-		fld->dtu[i] = qom*I*k*(fld->u[i])*(fld->x[i]); + om2*(fld->v[i]) 
-						- calc_pot(fld->dxphi[i],t,fld->Params->tau);
-		fld->dtv[i] = qom*I*k*(fld->v[i])*(fld->x[i]) +(qom-om2)*(fld->u[i])
-						-I*k*calc_pot(fld->phi[i],t,fld->Params->tau);
-		fld->dtsig[i] = qom*I*k*(fld->x[i])*(fld->sig[i]);
+				k = fld->k[j];
+				x = fld->x[i-NG];
+				phi = calc_pot(fld->phi[CINDX],t,fld->Params->tau);
+				dxphi = calc_pot(fld->dxphi[CINDX],t,fld->Params->tau);
+
+				fld->dtu[j+NC*indx] = qom*I*k*(fld->u[CINDX])*x + om2*(fld->v[CINDX]) - dxphi;
+				fld->dtv[j+NC*indx] = qom*I*k*(fld->v[CINDX])*x +(qom-om2)*(fld->u[CINDX]) - I*k*phi;
+				fld->dtsig[j+NC*indx] = qom*I*k*x*(fld->sig[CINDX]);
 		
 #ifndef BACKEVOLVE
-		}
+			}
 #endif
 #ifndef WAVEEVOLVE 
-		}
+			}
 #endif
+		}
 	}
 	
 /* Start adding the convolutions. */
 //	printf("\tAdding Convolution Terms...\n");
 
-	convolve(fld->u,fld->dxu,fld->dtu,-1);
-	convolve(fld->v,fld->dyu,fld->dtu,-1);
+	convolve(&fld->u[istart],&fld->dxu[istart],fld->dtu,-1);
+	convolve(&fld->v[istart],&fld->dyu[istart],fld->dtu,-1);
 	
-	convolve(fld->u,fld->dxv,fld->dtv,-1);
-	convolve(fld->v,fld->dyv,fld->dtv,-1);
+	convolve(&fld->u[istart],&fld->dxv[istart],fld->dtv,-1);
+	convolve(&fld->v[istart],&fld->dyv[istart],fld->dtv,-1);
 
-	convolve(fld->sig,fld->dxu,fld->dtsig,-1);
-	convolve(fld->dxsig,fld->u,fld->dtsig,-1);
-	convolve(fld->sig,fld->dyv,fld->dtsig,-1);
-	convolve(fld->dysig,fld->v,fld->dtsig,-1);
+	convolve(&fld->sig[istart],&fld->dxu[istart],fld->dtsig,-1);
+	convolve(&fld->dxsig[istart],&fld->u[istart],fld->dtsig,-1);
+	convolve(&fld->sig[istart],&fld->dyv[istart],fld->dtsig,-1);
+	convolve(&fld->dysig[istart],&fld->v[istart],fld->dtsig,-1);
 	
 /* Add viscosity and pressure */
 //	printf("\tAdding Viscosity...\n");
 	
 	add_visc(fld);
-	
+
+/* Make sure everything is zeroed that's supposed to be */	
+#ifndef BACKEVOLVE 
+	for(i=0;i<Nx;i++) {
+		fld->dtu[NC*i] = 0;
+		fld->dtv[NC*i] = 0;
+		fld->dtsig[NC*i] = 0;
+	}
+#endif
+#ifndef WAVEEVOLVE
+	for(i=0;i<Nx;i++) {
+		for(j=1;j<NC;j++) {	
+			fld->dtu[j+NC*i] = 0;
+			fld->dtv[j+NC*i] = 0;
+			fld->dtsig[j+NC*i] = 0;
+		}
+	}
+
+#endif
 
 	
 	return;	
@@ -100,7 +129,25 @@ void fill_rhs(Field *fld, double t) {
 double complex calc_pot(double complex phi,double t, double tau) {
 	
 	if (tau==0) return phi;
-	else return (1-exp(-t/tau))*phi;
+	else return (1-cexp(-t/tau))*phi;
 	
+}
+void zero_derivs(Field *fld) {
+	int i;
+
+	for(i=0;i<NTOTC;i++) {
+		fld->dxu[i] = 0;
+		fld->dxv[i]= 0;
+		fld->dxsig[i] = 0;
+		fld->dyu[i] = 0;
+		fld->dyv[i]= 0;
+		fld->dysig[i] = 0;
+		fld->dtu[i] = 0;
+		fld->dtv[i] = 0;
+		fld->dtsig[i] = 0;
+		fld->Tens->divPix[i] = 0;
+		fld->Tens->divPiy[i] = 0;
+	}
+	return;
 }
 
