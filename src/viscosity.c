@@ -22,9 +22,9 @@ void visc_tens(Field *fld) {
 		fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
 		fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
 	}
-	convolve(fld->Tens->Txx,fld->sig,fld->Tens->Pixx,nu);
-	convolve(fld->Tens->Txy,fld->sig,fld->Tens->Pixy,nu);
-	convolve(fld->Tens->Tyy,fld->sig,fld->Tens->Piyy,nu);
+	convolve(&fld->Tens->Txx[istart],&fld->sig[istart],&fld->Tens->Pixx[istart],nu);
+	convolve(&fld->Tens->Txy[istart],&fld->sig[istart],&fld->Tens->Pixy[istart],nu);
+	convolve(&fld->Tens->Tyy[istart],&fld->sig[istart],&fld->Tens->Piyy[istart],nu);
 
 /* Set Tensor B.C's */
 
@@ -49,27 +49,19 @@ void visc_tens(Field *fld) {
 }
 
 void add_visc(Field *fld) {
-	int i,j;
 
 	visc_tens(fld);
 	
 /* Calculate div(Pi) */	
-	calc_deriv(fld->Tens->Pixx,fld->Tens->divPix,NULL,
-						fld->Params->dx,fld->k);
-	calc_deriv(fld->Tens->Pixy,fld->Tens->divPiy,NULL,
-						fld->Params->dx,fld->k);
+	calc_deriv(fld->Tens->Pixx,fld->Tens->divPix,NULL,fld->Params->dx,fld->k);
+	calc_deriv(fld->Tens->Pixy,fld->Tens->divPiy,fld->Tens->divPix,fld->Params->dx,fld->k);
+	calc_deriv(fld->Tens->Piyy,NULL,fld->Tens->divPiy,fld->Params->dx,fld->k);
 	
-	for(i=NG;i<Nx+NG;i++) {
-		for(j=0;j<NC;j++) {
-			fld->Tens->divPix[i] += I*(fld->k[j])*(fld->Tens->Pixy[i]);
-			fld->Tens->divPiy[i] += I*(fld->k[j])*(fld->Tens->Piyy[i]);
-		}
-	}
 
 /* Convolve with 1/Sigma */
 
-	convolve_inv(fld->sig,fld->Tens->divPix,fld->dtu,1);
-	convolve_inv(fld->sig,fld->Tens->divPiy,fld->dtv,1);
+ 	convolve_inv(&fld->sig[istart],&fld->Tens->divPix[istart],fld->dtu,1);
+ 	convolve_inv(&fld->sig[istart],&fld->Tens->divPiy[istart],fld->dtv,1);
 	
 	return;
 }

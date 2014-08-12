@@ -256,7 +256,6 @@ void initphi(Field *fld) {
 	double rad, xs;
 	double *rphi = (double *)malloc(sizeof(double)*Nx*NR);
 	double *rdxphi = (double *)malloc(sizeof(double)*Nx*NR);
-	
 
 
 	for(i=0;i<Nx;i++) {
@@ -265,7 +264,7 @@ void initphi(Field *fld) {
 				xs = (fld->x[i])*(fld->x[i]) + (fld->Params->xs)*(fld->Params->xs);
 				rad = (fld->y[j])*(fld->y[j])+xs;
 				rphi[RINDX] = -(fld->Params->Mp)/sqrt(rad);
-				rdxphi[RINDX] = (fld->Params->Mp)*xs*pow(rad,-1.5);
+				rdxphi[RINDX] = (fld->Params->Mp)*(fld->x[i])*pow(rad,-1.5);
 			}
 			else {
 				rphi[RINDX]=0;
@@ -273,9 +272,10 @@ void initphi(Field *fld) {
 			}
 		}
 	}
-	fft_phi(rphi,fld->phi);
-	fft_dxphi(rdxphi,fld->dxphi);
 	
+	fft_phi(rphi,fld->phi);
+	fft_phi(rdxphi,fld->dxphi);
+
 
 	free(rphi); free(rdxphi);
 	return;

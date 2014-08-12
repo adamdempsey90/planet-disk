@@ -29,7 +29,7 @@ int main (void) {
 	printf("Outputting Coordinates...\n");
 
 	output_coords(fld);
-	outnum=0; dxoutnum=0; dtoutnum=0;
+	outnum=0; dxoutnum=0; dtoutnum=0; pioutnum=0;
 	
 	printf("Outputting Initial Conditions...\n");
 

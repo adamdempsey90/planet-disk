@@ -19,7 +19,7 @@ int func (double t, const double y[], double f[],void *params) {
 //	printf("Fill RHS...\n");
 
 	fill_rhs(fld,t);
-
+	output_rhs(fld); output_pi(fld);
 /* Copy complex data into real array with u,v,sig all combined for gsl */
 //	printf("Copy Data to GSL...\n");
 

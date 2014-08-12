@@ -116,3 +116,44 @@ void output_rhs(Field *fld) {
 	dtoutnum++;
 	return;
 }
+void output_pi(Field *fld) {
+	
+	FILE *fxx, *fxy, *fyy, *fdx, *fdy;
+	char fnamexx[50], fnameyy[50], fnamexy[50], fnamedx[50], fnamedy[50];
+
+
+	sprintf(fnamexx,"outputs/pixx_%d.dat",pioutnum);
+	sprintf(fnamexy,"outputs/pixy_%d.dat",pioutnum);
+	sprintf(fnameyy,"outputs/piyy_%d.dat",pioutnum);
+	sprintf(fnamedy,"outputs/divpix_%d.dat",pioutnum);
+	sprintf(fnamedx,"outputs/divpiy_%d.dat",pioutnum);
+	
+	fxx = fopen(fnamexx,"wb");
+	if (fxx == NULL) printf("ERROR: Couldn't open pixx file\n");
+	fxy = fopen(fnamexy,"wb");
+	if (fxy == NULL) printf("ERROR: Couldn't open pixy file\n");
+	fyy = fopen(fnameyy,"wb");
+	if (fyy == NULL) printf("ERROR: Couldn't open piyy file\n");
+	fdx = fopen(fnamedx,"wb");
+	if (fdx == NULL) printf("ERROR: Couldn't open divpix file\n");
+	fdy = fopen(fnamedy,"wb");
+	if (fdy == NULL) printf("ERROR: Couldn't open divpiy file\n");
+	
+#ifdef OUTGHOST	
+	fwrite((double *)fld->Tens->Pixx,sizeof(double),NTOTR,fxx);
+	fwrite((double *)fld->Tens->Pixy,sizeof(double),NTOTR,fxy);
+	fwrite((double *)fld->Tens->Piyy,sizeof(double),NTOTR,fyy);
+	fwrite((double *)fld->Tens->divPix,sizeof(double),NTOTR,fdx);
+	fwrite((double *)fld->Tens->divPiy,sizeof(double),NTOTR,fdy);
+#else
+	fwrite((double *)&fld->->Tens->Pixx[istart],sizeof(double),Nx*NR,fxx);
+	fwrite((double *)&fld->Tens->Pixy[istart],sizeof(double),Nx*NR,fxy);
+	fwrite((double *)&fld->Tens->Piyy[istart],sizeof(double),Nx*NR,fyy);
+	fwrite((double *)&fld->Tens->divPix[istart],sizeof(double),Nx*NR,fdx);
+	fwrite((double *)&fld->Tens->divPiy[istart],sizeof(double),Nx*NR,fdy);
+#endif
+
+	fclose(fxx); fclose(fxy); fclose(fyy); fclose(fdx); fclose(fdy);	
+	pioutnum++;
+	return;
+}

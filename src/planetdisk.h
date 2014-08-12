@@ -98,7 +98,7 @@ typedef struct Derivative {
 
 } Derivative;
 		
-int Nx, Ny, outnum, dxoutnum, func_calls, dtoutnum;
+int Nx, Ny, outnum, dxoutnum, func_calls, dtoutnum,pioutnum;
 Derivative deriv; 
 
 int func (double t, const double y[], double f[],void *params);
@@ -109,7 +109,6 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 void init_fft(void);
 void fft_free(void);
 void fft_phi(double *rphi, double complex *cphi);
-void fft_dxphi(double *rdxphi, double complex *cdxphi);
 void init(Field *fld);
 void allocate_field(Field *fld);
 void free_field(Field *fld);
@@ -128,3 +127,5 @@ void init_derivs(void);
 void output_derivs(Field *fld);
 void zero_derivs(Field *fld);
 void set_bc(Field *fld);
+void output_rhs(Field *fld);
+void output_pi(Field *fld);

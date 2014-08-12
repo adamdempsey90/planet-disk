@@ -42,7 +42,7 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 }
 void convolve_inv(double complex *q1, double complex *q2, double complex *res, double complex mult) {
 /*		Convolution function using previously declared de-aliasing mask
-		This function uses the inverse of q1, so make sure q1 != 0 anywhere.
+		This function uses the inverse of q1, so make sure q1 != 0 everywhere.
 	Inputs: q1 & q2 are the two complex arrays being convolved 
 			res is an initialized array to which the convolution will be added 
 			mult is a constant multiplication factor 
@@ -54,6 +54,7 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 	for(i=0;i<NC*Nx;i++) {
 		wc1[i] = mask[i]*q1[i]; 
 		wc2[i] = q2[i]*mask[i]*mult;
+//		printf("%lg %lg\n",cabs(wc1[i]), cabs(wc2[i]));
 	}
 
 /* FFT these to real space */	
@@ -61,7 +62,11 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 	fftw_execute(c2r2);
 
 /* Form product in real space */
-	for(i=0;i<Nx*NR;i++) wr3[i] = wr2[i]/(wr1[i]*Ny*Ny);
+	printf("\n\n\n");
+	for(i=0;i<Nx*NR;i++) printf("%lg %lg \n", wr1[i], wr2[i]);
+	printf("\n\n\n");
+
+	for(i=0;i<Nx*NR;i++) wr3[i] = wr2[i]*Ny/(wr1[i]*Ny);
 
 /* FFT back to complex space */
 	fftw_execute(r2c3);
@@ -131,15 +136,9 @@ void fft_free(void) {
 }
 
 void fft_phi(double *rphi, double complex *cphi) {
-	memcpy(wr1,&rphi[NG*NR],sizeof(double)*Nx*NR);
+	memcpy(wr1,rphi,sizeof(double)*Nx*NR);
 	fftw_execute(r2c1);
 	memcpy(&cphi[NG*NC],wc1,sizeof(double complex)*Nx*NC);
-	return;
-}
-void fft_dxphi(double *rdxphi, double complex *cdxphi) {
-	memcpy(wr1,&rdxphi[NG*NR],sizeof(double)*Nx*NR);
-	fftw_execute(r2c1);
-	memcpy(&cdxphi[NG*NC],wc1,sizeof(double complex)*Nx*NC);
 	return;
 }
 
