@@ -84,6 +84,11 @@ int main (void) {
         break;
     }
 
+#ifdef WAVEKILLBC
+	global_r2c(y,fld);
+	wavekillbc(fld,dt);
+	global_c2r(y,fld);
+#endif
      
       
    	if( t >= fld->Params->t0 + i * (fld->Params->endt) / ((double) fld->Params->numf)) { 

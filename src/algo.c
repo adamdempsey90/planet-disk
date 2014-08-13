@@ -67,7 +67,7 @@ void fill_rhs(Field *fld, double t) {
 #endif
 
 				k = fld->k[j];
-				x = fld->x[i-NG];
+				x = fld->x[i];
 				phi = calc_pot(fld->phi[CINDX],t,fld->Params->tau);
 				dxphi = calc_pot(fld->dxphi[CINDX],t,fld->Params->tau);
 

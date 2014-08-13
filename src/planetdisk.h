@@ -131,3 +131,4 @@ void output_rhs(Field *fld);
 void output_pi(Field *fld);
 void transform(Field *fld);
 void output_reals(Field *fld);
+void wavekillbc(Field *fld,double dt);

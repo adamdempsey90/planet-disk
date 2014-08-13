@@ -43,7 +43,7 @@ void output(Field *fld) {
 void output_coords(Field *fld) {
 	FILE *f;
 	f = fopen("outputs/coords.dat","wb");
-	fwrite(fld->x,sizeof(double),Nx,f);
+	fwrite(&fld->x[NG],sizeof(double),Nx,f);
 	fwrite(fld->k,sizeof(double),NC,f);
 	fwrite(fld->y,sizeof(double),Ny,f);
 	fclose(f);

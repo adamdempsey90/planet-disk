@@ -6,7 +6,7 @@ void init(Field *fld) {
 	double Ly = fld->Params->Ly;
 	
 	printf("\t Initializing Coordinates...\n");
-	for(i=0;i<Nx;i++) fld->x[i] = (i+.5)*(Lx/Nx);
+	for(i=0;i<(Nx+2*NG);i++) fld->x[i] = (i-NG+.5)*(Lx/Nx);
 	for(i=0;i<Ny;i++) fld->y[i] = -.5*Ly + (i+.5)*(Ly/Ny);
 	printf("\t Initializing Boundary Conditions...\n");
 	for(i=0;i<NC;i++) {
@@ -164,7 +164,7 @@ void allocate_field(Field *fld) {
 	
 	fld->Tens = (Stress *)malloc(sizeof(Stress));
 		
-	fld->x = (double *)malloc(sizeof(double)*Nx);
+	fld->x = (double *)malloc(sizeof(double)*(Nx+2*NG));
 	fld->y = (double *)malloc(sizeof(double)*Ny);
 	fld->k = (double *)malloc(sizeof(double)*NC);
 	
@@ -265,7 +265,7 @@ void initphi(Field *fld) {
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<NR;j++) {
 			if (j<Ny) {
-				xs = (fld->x[i])*(fld->x[i]) + (fld->Params->xs)*(fld->Params->xs);
+				xs = (fld->x[i+NG])*(fld->x[i+NG]) + (fld->Params->xs)*(fld->Params->xs);
 				rad = (fld->y[j])*(fld->y[j])+xs;
 				rphi[RINDX] = -(fld->Params->Mp)/sqrt(rad);
 				rdxphi[RINDX] = (fld->Params->Mp)*(fld->x[i])*pow(rad,-1.5);

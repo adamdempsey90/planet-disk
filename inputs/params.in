@@ -1,6 +1,6 @@
 # Input Parameters
 Nx = 1024
-Ny = 128
+Ny = 32
 Lx = 30.0
 Ly = 30.0
 xsoft = .6
