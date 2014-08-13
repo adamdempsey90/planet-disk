@@ -1,4 +1,33 @@
-#include "meanwave.h"
+#include "planetdisk.h"
+
+double complex *Twd, *dxFb, *dxFp, *Th;
+
+void amf(Field *fld) {
+	int i,j;
+	
+	calc_deriv(fld->u,fld->dxu,fld->dyu,fld->Params->dx,fld->k);
+	calc_deriv(fld->v,fld->dxv,fld->dyv,fld->Params->dx,fld->k);
+	calc_deriv(fld->sig,fld->dxsig,fld->dysig,fld->Params->dx,fld->k);
+	visc_tens(fld);
+
+	calc_deriv(fld->Tens->Pixy,fld->Tens->divPiy,NULL,fld->Params->dx,fld->k);
+	calc_deriv(fld->Tens->Piyy,NULL,fld->Tens->divPiy,fld->Params->dx,fld->k);
+
+ 	convolve_inv(&fld->sig[istart],&fld->Tens->divPiy[istart],Twd,1);
+
+
+
+	return;
+}
+
+
+
+
+
+
+
+
+
 void calcTwd(parameters *p, double ti) {
 	int i,j,m;
 	FILE *fp;

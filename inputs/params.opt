@@ -4,18 +4,23 @@
 
 
 ## Evolve the wave components
+
 +WAVEEVOLVE
 
 ## Evolve the mean components
+
 #+BACKEVOLVE
 
 ## Include the non-linear terms in the wave equations
+
 #+NONLINEAR
 
 ## Use the incompressible viscosous tensor
+
 #+SIMPLEVISC
 
 ## Derivative Order
+
 #+SECDERIV
 #+FOURTHDERIV
 #+SIXTHDERIV
@@ -23,27 +28,24 @@
 +TENTHDERIV
 
 ## Restart option
-+RESTART
+## Restart files should be placed in the inputs directory 
+## with the names restart_vx.dat, restart_vy.dat, restart_dens.dat
+
+#+RESTART
 
 
 ## Boundary conditions
-+OUTBC
-#+PERIODICBC
+
 +WAVEKILLBC
 
 ## OpenMP parallization
-#+OPENMP
+
++OPENMP
 
 ## Output options
 #+OUTGHOST
 #+OUTPHI
-
 #+OUTDERIV
-
-
-## Level of time stepping control 
-#+HIGHLEVEL
-+LOWLEVEL
 
 
 

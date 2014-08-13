@@ -12,7 +12,6 @@
 #include <sys/stat.h>
 
 
-
 #ifdef OPENMP
 #define NUMTHREADS 8
 #endif
@@ -132,3 +131,5 @@ void output_pi(Field *fld);
 void transform(Field *fld);
 void output_reals(Field *fld);
 void wavekillbc(Field *fld,double dt);
+void output_defines(void);
+void restart(Field *fld);

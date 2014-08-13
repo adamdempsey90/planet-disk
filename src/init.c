@@ -16,6 +16,10 @@ void init(Field *fld) {
 	initphi(fld);
 
 /* Set initial conditions here */
+#ifdef OPENMP 
+	#pragma omp parallel private(i,j) shared(fld) num_threads(NUMTHREADS)
+	#pragma omp for schedule(static)
+#endif	
 	for(i=NG;i<Nx+NG;i++) {
 		for(j=0;j<NC;j++) {
 			fld->u[CINDX] = 0;
@@ -68,35 +72,36 @@ void init(Field *fld) {
 		fld->Tens->Txy[i] = 0;
 		fld->Tens->Tyy[i] = 0;
 	}
+	
+#ifdef RESTART
+	restart(fld);
+#endif
+
 	return;
 }
 
-// void restart(parameters *p) {
-// 	FILE *fp;
-// 	double ru,iu,rv,iv,rd,id,vx,vy,d,x;
-// 	int j;
-// 
-// //	fp=fopen("restart.txt","r");
-// 	fp=fopen(p->restartfname,"r");
-// 	j=NG;
-// 	while (!feof(fp)) {
-// //   		if (fscanf(fp, "%lg %lg %lg %lg %lg %lg %lg %lg %lg %lg", &x, &ru, &iu, &rv, 
-// //   					&iv, &rd, &id, &vx, &vy, &d) != 10)   break;
-// //		if (fscanf(fp,"%lg",&d) != 1) break;
-// 		if (fscanf(fp,"%lg %lg %lg %lg",&x,&d,&vx,&vy) != 4) break;
-// //		XCORD = x;
-// //		UVEL = ru + I*iu;
-// //		VVEL = rv + I*iv;
-// //		SIG = rd + I*id;
-// 		VXBAR = vx;
-// 		VYBAR = vy;
-// 		DBAR = d;
-// 		j++;
-// 	}
-// 	
-// 	fclose(fp);
-// 	return;
-// }
+
+
+void restart(Field *fld) {
+	FILE *fu, *fv, *fs;
+	
+	fu =fopen("inputs/restart_vx.dat","r");
+	if (fu==NULL) printf("ERROR: Can't find restart file for vx\n");
+	fv = fopen("inputs/restart_vy.dat","r");
+	if (fv==NULL) printf("ERROR: Can't find restart file for vy\n");
+	fs = fopen("inputs/restart_dens.dat","r");
+	if (fs==NULL) printf("ERROR: Can't find restart file for dens\n");
+
+	printf("Reading Restart Files...\n");
+	if (fu!=NULL) fread(&fld->u[istart],sizeof(double complex),Nx*NC,fu);
+	if (fv!=NULL) fread(&fld->v[istart],sizeof(double complex),Nx*NC,fv);
+	if (fs!=NULL) fread(&fld->sig[istart],sizeof(double complex),Nx*NC,fs);
+
+	fclose(fu); fclose(fv); fclose(fs);
+
+	return;
+
+}
 
 
 
@@ -261,14 +266,17 @@ void initphi(Field *fld) {
 	double *rphi = (double *)malloc(sizeof(double)*Nx*NR);
 	double *rdxphi = (double *)malloc(sizeof(double)*Nx*NR);
 
-
+#ifdef OPENMP 
+	#pragma omp parallel private(i,j,xs,rad) shared(fld,rphi,rdxphi) num_threads(NUMTHREADS)
+	#pragma omp for schedule(static)
+#endif	
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<NR;j++) {
 			if (j<Ny) {
 				xs = (fld->x[i+NG])*(fld->x[i+NG]) + (fld->Params->xs)*(fld->Params->xs);
 				rad = (fld->y[j])*(fld->y[j])+xs;
 				rphi[RINDX] = -(fld->Params->Mp)/sqrt(rad);
-				rdxphi[RINDX] = (fld->Params->Mp)*(fld->x[i])*pow(rad,-1.5);
+				rdxphi[RINDX] = (fld->Params->Mp)*(fld->x[i+NG])*pow(rad,-1.5);
 			}
 			else {
 				rphi[RINDX]=0;

@@ -5,8 +5,9 @@ int main (void) {
  	double *y;
 	int gsl_size;
 	printf("Welcome to the planet disk code...\n");
-	printf("Reading Inputs...\n");
-	printf("Initializing data structures...\n");
+	printf("Code compiled with...\n");
+	output_defines();
+
 	Field *fld = (Field *)malloc(sizeof(Field));
 	fld->Params = (Parameters *)malloc(sizeof(Parameters));
 
@@ -16,6 +17,9 @@ int main (void) {
 	printf("Reading Inputs...\n");
 	
 	read_input(fld);
+
+	printf("Initializing data structures...\n");
+
 	allocate_field(fld);
 
 	printf("Initializing FFTW...\n");
@@ -78,7 +82,7 @@ int main (void) {
                                            &h, y);
     dt = t-dt;
 
-	printf ("step size = %.5e, at t=%.5e \n", dt, t);
+	printf ("\t step size = %.5e, at t=%.5e \n", dt, t);
     if (status != GSL_SUCCESS) {
      	printf("ERROR With Step...\nTerminating Run...\n");
         break;
@@ -92,7 +96,7 @@ int main (void) {
      
       
    	if( t >= fld->Params->t0 + i * (fld->Params->endt) / ((double) fld->Params->numf)) { 
-   		 printf ("\t OUTPUT %d, step size = %.5e, at t=%.5e \n", outnum,h,t);
+   		 printf ("\t\t OUTPUT %d, step size = %.5e, at t=%.5e \n", outnum,h,t);
 
 		global_r2c(y,fld);
 		

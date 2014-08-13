@@ -36,7 +36,10 @@ void wavekillbc(Field *fld,double dt)
 	int i,j;
 	double R,tau,x;
 	double x_sup = fld->x[Nx+NG-1] - (fld->Params->Lx)*0.05;
-	
+#ifdef OPENMP 
+	#pragma omp parallel private(i,j,x,R,tau) shared(fld) num_threads(NUMTHREADS)
+	#pragma omp for schedule(static)
+#endif	
 	for(i=NG;i<(Nx+NG);i++) {
 		x = fld->x[i];
 		for(j=0;j<NC;j++) { 
@@ -45,11 +48,21 @@ void wavekillbc(Field *fld,double dt)
 			R *= R;
 			tau = 2*M_PI/(10*fld->Params->omega);
 			if (R>0.0) {
-				tau /= R;	
+				tau /= R;
+				if (j==0) {
+#ifdef BACKEVOLVE	
 				fld->u[CINDX] = (fld->u[CINDX])/(1+dt/tau);
 				fld->v[CINDX] = (fld->v[CINDX])/(1+dt/tau);
-				if (j==0) fld->sig[CINDX] = ((fld->sig[CINDX])*tau + 1.0*dt)/(dt+tau); 
-				else fld->sig[CINDX]=(fld->sig[CINDX])/(1+dt/tau);
+				fld->sig[CINDX] = ((fld->sig[CINDX])*tau + 1.0*dt)/(dt+tau);
+#endif
+				}
+				else {
+#ifdef WAVEEVOLVE	
+					fld->u[CINDX] = (fld->u[CINDX])/(1+dt/tau);
+					fld->v[CINDX] = (fld->v[CINDX])/(1+dt/tau);
+					fld->sig[CINDX]=(fld->sig[CINDX])/(1+dt/tau);
+#endif
+				}
 			}
 		}
 	}

@@ -18,6 +18,10 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 	int i;
 
 /* De-alias with 2/3 truncation rule */	
+#ifdef OPENMP 
+	#pragma omp parallel private(i) shared(q1,q2,wc1,wc2,mask) num_threads(NUMTHREADS)
+	#pragma omp for schedule(static)
+#endif	
 	for(i=0;i<NC*Nx;i++) {
 		wc1[i] = q1[i]*mask[i]*mult; 
 		wc2[i] = q2[i]*mask[i];
@@ -28,12 +32,17 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 	fftw_execute(c2r2);
 
 /* Form product in real space */
+#ifdef OPENMP 
+	#pragma omp parallel private(i) shared(wr1,wr2) num_threads(NUMTHREADS)
+	#pragma omp for schedule(static)
+#endif	
 	for(i=0;i<Nx*NR;i++) wr3[i] = wr1[i]*wr2[i]/(Ny*Ny);
 
 /* FFT back to complex space */
 	fftw_execute(r2c3);
 	
 /* add output */
+
 	for(i=0;i<NC*Nx;i++) {
 		res[i] += wc3[i];
 	}	
@@ -48,13 +57,16 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 			mult is a constant multiplication factor 
 */
 
-	int i,indx,j;
+	int i,j;
 
 /* De-alias with 2/3 truncation rule */	
-	for(i=istart;i<iend;i++) {
-		indx=i-istart;
-		wc1[indx] = mask[indx]*q1[i]; 
-		wc2[indx] = q2[i]*mask[indx]*mult;
+#ifdef OPENMP 
+	#pragma omp parallel private(i) shared(q1,q2,wc1,wc2,mask) num_threads(NUMTHREADS)
+	#pragma omp for schedule(static)
+#endif	
+	for(i=0;i<Nx*NC;i++) {
+		wc1[i] = mask[i]*q1[i]; 
+		wc2[i] = q2[i]*mask[i]*mult;
 //		printf("%lg %lg\n",cabs(wc1[i]), cabs(wc2[i]));
 	}
 
@@ -63,17 +75,21 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 	fftw_execute(c2r2);
 
 /* Form product in real space */
-
+#ifdef OPENMP 
+	#pragma omp parallel private(i,j) shared(wr3,wr2,wr1) num_threads(NUMTHREADS)
+	#pragma omp for schedule(static)
+#endif	
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<NR;j++) {
-			if(j<Ny) wr3[j+NR*i] = wr2[j+NR*i]/wr1[j+NR*i];
-			else wr3[j+NR*i]= 0;
+			if(wr1[RINDX]!=0) wr3[RINDX] = wr2[RINDX]/wr1[RINDX];
+			else wr3[RINDX]= 0;
 		}
 	}
 /* FFT back to complex space */
 	fftw_execute(r2c3);
 	
 /* add output */
+	
 	for(i=0;i<Nx*NC;i++) {
 		res[i] += wc3[i];
 	}	
@@ -100,7 +116,7 @@ void init_fft(void) {
 	mask = (double *)malloc(sizeof(double)*Nx*NC);
 	
 	Nmax = (2./3)*(NC-1);
-	
+
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<NC;j++) {
 			if (j < Nmax) mask[CINDX] = 1;

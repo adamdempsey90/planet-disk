@@ -11,7 +11,10 @@ void visc_tens(Field *fld) {
 	double complex divv;
 	
 /* Forms Navier-Stokes stress tensor T=grad(v) + grad(v)^T - 2/3 div(v) I */
-
+#ifdef OPENMP 
+	#pragma omp parallel private(i,divv) shared(fld) num_threads(NUMTHREADS)
+	#pragma omp for schedule(static)
+#endif	
 	for(i=istart;i<iend;i++) {
 		divv = fld->dxu[i] + fld->dyv[i];
 		divv *= twoth;
@@ -21,6 +24,8 @@ void visc_tens(Field *fld) {
 		fld->Tens->Pixx[i] = -c*(fld->sig[i]);
 		fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
 		fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
+		fld->Tens->divPix[i] = 0;
+		fld->Tens->divPiy[i] = 0;
 	}
 	convolve(&fld->Tens->Txx[istart],&fld->sig[istart],&fld->Tens->Pixx[istart],nu);
 	convolve(&fld->Tens->Txy[istart],&fld->sig[istart],&fld->Tens->Pixy[istart],nu);
@@ -60,8 +65,8 @@ void add_visc(Field *fld) {
 
 /* Convolve with 1/Sigma */
 
- 	convolve_inv(fld->sig,fld->Tens->divPix,fld->dtu,1);
- 	convolve_inv(fld->sig,fld->Tens->divPiy,fld->dtv,1);
+ 	convolve_inv(&fld->sig[istart],&fld->Tens->divPix[istart],fld->dtu,1);
+ 	convolve_inv(&fld->sig[istart],&fld->Tens->divPiy[istart],fld->dtv,1);
 	
 	return;
 }

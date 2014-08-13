@@ -55,6 +55,10 @@ void fill_rhs(Field *fld, double t) {
 /*	Fill RHS arrays with any non-convolution terms*/	
 //	printf("\tAdding Non-Convolution Terms...\n");
 
+#ifdef OPENMP 
+	#pragma omp parallel private(i,j,indx,k,x,phi,dxphi) shared(fld) num_threads(NUMTHREADS)
+	#pragma omp for schedule(static)
+#endif
 	for(i=NG;i<Nx+NG;i++) {
 		indx = i-NG;
 		for(j=0;j<NC;j++) {
@@ -105,6 +109,7 @@ void fill_rhs(Field *fld, double t) {
 
 /* Make sure everything is zeroed that's supposed to be */	
 #ifndef BACKEVOLVE 
+
 	for(i=0;i<Nx;i++) {
 		fld->dtu[NC*i] = 0;
 		fld->dtv[NC*i] = 0;
@@ -112,6 +117,7 @@ void fill_rhs(Field *fld, double t) {
 	}
 #endif
 #ifndef WAVEEVOLVE
+
 	for(i=0;i<Nx;i++) {
 		for(j=1;j<NC;j++) {	
 			fld->dtu[j+NC*i] = 0;

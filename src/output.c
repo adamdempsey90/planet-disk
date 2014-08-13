@@ -169,3 +169,31 @@ void output_reals(Field *fld) {
 	dxoutnum++;
 	return;
 }
+
+void output_defines(void) {
+
+#ifdef RESTART
+	printf("\t Restarting from file\n");
+#endif
+#ifdef WAVEEVOLVE
+	printf("\t Evolving wave componenets\n");
+#endif
+#ifdef BACKEVOLVE
+	printf("\t Evolving mean componenets\n");
+#endif
+	printf("\t Finite difference order is %d \n",2*NG);
+#ifdef SIMPLEVISC
+	printf("\t Using the incompressible viscous stress tensor\n");
+#endif
+#ifdef WAVEKILLBC
+	printf("\t Enforcing wave killing boundary conditions\n");
+#endif
+#ifdef OPENMP
+	printf("\t Using OpenMp with %d threads\n", NUMTHREADS);
+#endif
+
+#ifdef OUTGHOST
+	printf("\t Outputting the ghost zones\n");
+#endif
+	return;
+}

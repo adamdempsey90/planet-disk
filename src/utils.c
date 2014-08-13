@@ -44,7 +44,10 @@ void calc_deriv(double complex *in, double complex *dxout, double complex *dyout
 */
 	int i,j,d;
 	double complex temp;
-
+#ifdef OPENMP 
+	#pragma omp parallel private(i,j,temp,d) shared(k,in,dxout,dyout) num_threads(NUMTHREADS)
+	#pragma omp for schedule(static)
+#endif	
 	for(i=NG;i<Nx+NG;i++) {
 		for(j=0;j<NC;j++) { 
 			if (dyout != NULL) dyout[CINDX] += I*k[j]*in[CINDX];
