@@ -20,18 +20,6 @@ void output(Field *fld) {
 	if (fs == NULL) printf("ERROR: Couldn't open dens file\n");
 
 
-	
-#ifdef REALOUT
-
-	fftw_execute_plan(fld->u,c2r1);
-	fftw_execute_plan(fld->v,c2r1);
-	fftw_execute_plan(fld->sig,c2r1);
-
-
-	fwrite(fld->vx,sizeof(double),NTOTR,fu);
-	fwrite(fld->vy,sizeof(double),NTOTR,fv);
-	fwrite(fld->dens,sizeof(double),NTOTR,fs);
-#else
 
 #ifdef OUTGHOST
 	fwrite((double *)fld->u,sizeof(double),NTOTR,fu);
@@ -43,7 +31,6 @@ void output(Field *fld) {
 	fwrite((double *)&fld->sig[istart],sizeof(double),Nx*NR,fs);
 
 #endif	
-#endif
 
 	fclose(fu); fclose(fv); fclose(fs);	
 	
@@ -146,7 +133,7 @@ void output_pi(Field *fld) {
 	fwrite((double *)fld->Tens->divPix,sizeof(double),NTOTR,fdx);
 	fwrite((double *)fld->Tens->divPiy,sizeof(double),NTOTR,fdy);
 #else
-	fwrite((double *)&fld->->Tens->Pixx[istart],sizeof(double),Nx*NR,fxx);
+	fwrite((double *)&fld->Tens->Pixx[istart],sizeof(double),Nx*NR,fxx);
 	fwrite((double *)&fld->Tens->Pixy[istart],sizeof(double),Nx*NR,fxy);
 	fwrite((double *)&fld->Tens->Piyy[istart],sizeof(double),Nx*NR,fyy);
 	fwrite((double *)&fld->Tens->divPix[istart],sizeof(double),Nx*NR,fdx);
@@ -155,5 +142,30 @@ void output_pi(Field *fld) {
 
 	fclose(fxx); fclose(fxy); fclose(fyy); fclose(fdx); fclose(fdy);	
 	pioutnum++;
+	return;
+}
+void output_reals(Field *fld) {
+	FILE *fu, *fv, *fs;
+	char fnameu[50], fnamev[50], fnames[50];
+	
+	transform(fld);
+	sprintf(fnameu,"outputs/rvx_%d.dat",dxoutnum);
+	sprintf(fnamev,"outputs/rvy_%d.dat",dxoutnum);
+	sprintf(fnames,"outputs/rdens_%d.dat",dxoutnum);
+
+	fu = fopen(fnameu,"wb");
+	if (fu == NULL) printf("ERROR: Couldn't open dxvx file\n");
+	fv = fopen(fnamev,"wb");
+	if (fv == NULL) printf("ERROR: Couldn't open dxvy file\n");
+	fs = fopen(fnames,"wb");
+	if (fs == NULL) printf("ERROR: Couldn't open dxdens file\n");
+
+
+	fwrite(fld->vx,sizeof(double),Nx*NR,fu);
+	fwrite(fld->vy,sizeof(double),Nx*NR,fv);
+	fwrite(fld->dens,sizeof(double),Nx*NR,fs);
+
+	fclose(fu); fclose(fv); fclose(fs);	
+	dxoutnum++;
 	return;
 }

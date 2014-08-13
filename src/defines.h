@@ -3,4 +3,3 @@
 #define OUTBC
 #define WAVEKILLBC
 #define LOWLEVEL
-#define OUTGHOST

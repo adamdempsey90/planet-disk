@@ -199,9 +199,9 @@ void allocate_field(Field *fld) {
 	fld->Tens->divPix = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->Tens->divPiy = (double complex *)malloc(sizeof(double complex)*NTOTC);
 
-	fld->vx = (double *)(fld->u);
-	fld->vy = (double *)(fld->v);
-	fld->dens = (double *)(fld->sig);
+	fld->vx = (double *)malloc(sizeof(double)*Nx*NR);
+	fld->vy =  (double *)malloc(sizeof(double)*Nx*NR);
+	fld->dens =  (double *)malloc(sizeof(double)*Nx*NR);
 
 	return;
 }
@@ -242,6 +242,10 @@ void free_field(Field *fld) {
 	free(fld->Tens->divPix);
 	free(fld->Tens->divPiy);
 
+	free(fld->vx); 
+	free(fld->vy);
+	free(fld->dens);
+	
 	free(fld->Tens);
 	free(fld->Params);
 	free(fld);

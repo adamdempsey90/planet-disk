@@ -4,7 +4,7 @@
 int func (double t, const double y[], double f[],void *params) {
 
 	func_calls++;
-	printf("\t\t # Function calls = %d \n",func_calls);
+//	printf("\t\t # Function calls = %d \n",func_calls);
 //	printf("Function Called at time = %lg...\n",t);
 	Field *fld = (Field *)params;
 
@@ -19,7 +19,8 @@ int func (double t, const double y[], double f[],void *params) {
 //	printf("Fill RHS...\n");
 
 	fill_rhs(fld,t);
-	output_rhs(fld); output_pi(fld);
+	
+//	output_rhs(fld); output_pi(fld);
 /* Copy complex data into real array with u,v,sig all combined for gsl */
 //	printf("Copy Data to GSL...\n");
 
@@ -50,7 +51,7 @@ void fill_rhs(Field *fld, double t) {
 	calc_deriv(fld->v,fld->dxv,fld->dyv,fld->Params->dx,fld->k);
 	calc_deriv(fld->sig,fld->dxsig,fld->dysig,fld->Params->dx,fld->k);
 
-	output_derivs(fld);
+//	output_derivs(fld);
 /*	Fill RHS arrays with any non-convolution terms*/	
 //	printf("\tAdding Non-Convolution Terms...\n");
 

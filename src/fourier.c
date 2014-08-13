@@ -48,12 +48,13 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 			mult is a constant multiplication factor 
 */
 
-	int i;
+	int i,indx,j;
 
 /* De-alias with 2/3 truncation rule */	
-	for(i=0;i<NC*Nx;i++) {
-		wc1[i] = mask[i]*q1[i]; 
-		wc2[i] = q2[i]*mask[i]*mult;
+	for(i=istart;i<iend;i++) {
+		indx=i-istart;
+		wc1[indx] = mask[indx]*q1[i]; 
+		wc2[indx] = q2[i]*mask[indx]*mult;
 //		printf("%lg %lg\n",cabs(wc1[i]), cabs(wc2[i]));
 	}
 
@@ -62,12 +63,13 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 	fftw_execute(c2r2);
 
 /* Form product in real space */
-	printf("\n\n\n");
-	for(i=0;i<Nx*NR;i++) printf("%lg %lg \n", wr1[i], wr2[i]);
-	printf("\n\n\n");
 
-	for(i=0;i<Nx*NR;i++) wr3[i] = wr2[i]*Ny/(wr1[i]*Ny);
-
+	for(i=0;i<Nx;i++) {
+		for(j=0;j<NR;j++) {
+			if(j<Ny) wr3[j+NR*i] = wr2[j+NR*i]/wr1[j+NR*i];
+			else wr3[j+NR*i]= 0;
+		}
+	}
 /* FFT back to complex space */
 	fftw_execute(r2c3);
 	
@@ -82,6 +84,13 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 
 void init_fft(void) {
 	int i,j,Nmax;
+	
+	int n[] = {Ny};
+	int howmany = Nx;
+	int idist=NC, odist=NR;
+	int istride=1, ostride=1;
+	int *inembed=NULL, *onembed=NULL;
+	
 	wc1 = (double complex *)malloc(sizeof(double complex)*Nx*NC);
 	wr1 = (double *)wc1;
 	wc2 = (double complex *)malloc(sizeof(double complex)*Nx*NC);
@@ -99,22 +108,30 @@ void init_fft(void) {
 		}
 	}
 	
-	c2r1=fftw_plan_many_dft_c2r(1,&Nx,Ny,wc1,&Nx,1,NC,wr1,&Nx,1,NR,FFTW_ESTIMATE);
-	if (c2r1 == NULL) printf("Problem with c2r1\n");
-	r2c1=fftw_plan_many_dft_r2c(1,&Nx,Ny,wr1,&Nx,1,NR,wc1,&Nx,1,NC,FFTW_ESTIMATE);
-	if (r2c1 == NULL) printf("Problem with r2c1\n");
-	
-	c2r2=fftw_plan_many_dft_c2r(1,&Nx,Ny,wc2,&Nx,1,NC,wr2,&Nx,1,NR,FFTW_ESTIMATE);
-	if (c2r2 == NULL) printf("Problem with c2r2\n");
-	r2c2=fftw_plan_many_dft_r2c(1,&Nx,Ny,wr2,&Nx,1,NR,wc2,&Nx,1,NC,FFTW_ESTIMATE);
-	if (r2c2 == NULL) printf("Problem with r2c2\n");
-	
-	c2r3=fftw_plan_many_dft_c2r(1,&Nx,Ny,wc3,&Nx,1,NC,wr3,&Nx,1,NR,FFTW_ESTIMATE);
-	if (c2r3 == NULL) printf("Problem with c2r3\n");
-	r2c3=fftw_plan_many_dft_r2c(1,&Nx,Ny,wr3,&Nx,1,NR,wc3,&Nx,1,NC,FFTW_ESTIMATE);
-	if (r2c3 == NULL) printf("Problem with r2c3\n");
-	
-	
+// //	c2r1=fftw_plan_many_dft_c2r(1,&Nx,Ny,wc1,&Nx,1,NC,wr1,&Nx,1,NR,FFTW_ESTIMATE);
+// 	if (c2r1 == NULL) printf("Problem with c2r1\n");
+// //	r2c1=fftw_plan_many_dft_r2c(1,&Nx,Ny,wr1,&Nx,1,NR,wc1,&Nx,1,NC,FFTW_ESTIMATE);
+// 	if (r2c1 == NULL) printf("Problem with r2c1\n");
+// 	
+// //	c2r2=fftw_plan_many_dft_c2r(1,&Nx,Ny,wc2,&Nx,1,NC,wr2,&Nx,1,NR,FFTW_ESTIMATE);
+// 	if (c2r2 == NULL) printf("Problem with c2r2\n");
+// //	r2c2=fftw_plan_many_dft_r2c(1,&Nx,Ny,wr2,&Nx,1,NR,wc2,&Nx,1,NC,FFTW_ESTIMATE);
+// 	if (r2c2 == NULL) printf("Problem with r2c2\n");
+// 	
+// //	c2r3=fftw_plan_many_dft_c2r(1,&Nx,Ny,wc3,&Nx,1,NC,wr3,&Nx,1,NR,FFTW_ESTIMATE);
+// 	if (c2r3 == NULL) printf("Problem with c2r3\n");
+// //	r2c3=fftw_plan_many_dft_r2c(1,&Nx,Ny,wr3,&Nx,1,NR,wc3,&Nx,1,NC,FFTW_ESTIMATE);
+// 	if (r2c3 == NULL) printf("Problem with r2c3\n");
+// 	
+	c2r2=fftw_plan_many_dft_c2r(1,n,howmany,wc2, inembed, istride, idist, wr2, onembed, ostride, odist,FFTW_ESTIMATE);
+	r2c2=fftw_plan_many_dft_r2c(1,n,howmany,wr2, onembed, ostride, odist, wc2, inembed, istride, idist,FFTW_ESTIMATE);
+
+	c2r1=fftw_plan_many_dft_c2r(1,n,howmany,wc1, inembed, istride, idist, wr1, onembed, ostride, odist,FFTW_ESTIMATE);
+	r2c1=fftw_plan_many_dft_r2c(1,n,howmany,wr1, onembed, ostride, odist, wc1, inembed, istride, idist,FFTW_ESTIMATE);
+
+	c2r3=fftw_plan_many_dft_c2r(1,n,howmany,wc3, inembed, istride, idist, wr3, onembed, ostride, odist,FFTW_ESTIMATE);
+	r2c3=fftw_plan_many_dft_r2c(1,n,howmany,wr3, onembed, ostride, odist, wc3, inembed, istride, idist,FFTW_ESTIMATE);
+
 	return;
 
 }
@@ -140,6 +157,20 @@ void fft_phi(double *rphi, double complex *cphi) {
 	fftw_execute(r2c1);
 	memcpy(&cphi[NG*NC],wc1,sizeof(double complex)*Nx*NC);
 	return;
+}
+void transform(Field *fld) {
+	
+	memcpy(wc1,&(fld->u[istart]),sizeof(double complex)*Nx*NC);
+	memcpy(wc2,&(fld->v[istart]),sizeof(double complex)*Nx*NC);
+	memcpy(wc3,&(fld->sig[istart]),sizeof(double complex)*Nx*NC);
+	fftw_execute(c2r1);
+	fftw_execute(c2r2);
+	fftw_execute(c2r3);
+	memcpy(fld->vx,wr1,sizeof(double)*Nx*NR);
+	memcpy(fld->vy,wr2,sizeof(double)*Nx*NR);
+	memcpy(fld->dens,wr3,sizeof(double)*Nx*NR);
+	return;
+
 }
 
 

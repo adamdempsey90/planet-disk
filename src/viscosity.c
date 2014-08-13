@@ -60,8 +60,8 @@ void add_visc(Field *fld) {
 
 /* Convolve with 1/Sigma */
 
- 	convolve_inv(&fld->sig[istart],&fld->Tens->divPix[istart],fld->dtu,1);
- 	convolve_inv(&fld->sig[istart],&fld->Tens->divPiy[istart],fld->dtv,1);
+ 	convolve_inv(fld->sig,fld->Tens->divPix,fld->dtu,1);
+ 	convolve_inv(fld->sig,fld->Tens->divPiy,fld->dtv,1);
 	
 	return;
 }

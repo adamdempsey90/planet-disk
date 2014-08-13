@@ -38,7 +38,9 @@ int main (void) {
 	printf("Defining the ODE System...\n");
 
 	gsl_size = 3*Nx*NR;
-	
+
+//	output_reals(fld);
+
 	y = (double *)malloc(sizeof(double)*gsl_size);
 	global_c2r(y,fld);
 

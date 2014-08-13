@@ -129,3 +129,5 @@ void zero_derivs(Field *fld);
 void set_bc(Field *fld);
 void output_rhs(Field *fld);
 void output_pi(Field *fld);
+void transform(Field *fld);
+void output_reals(Field *fld);
