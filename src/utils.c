@@ -4,9 +4,9 @@
 void global_c2r(double *y, Field *fld) {
 /* Used to pack the complex u,v,sig arrays into the real gsl y array  */
 	
-	memcpy(&y[0],(double *)&fld->u[NG*NC],sizeof(double complex)*Nx*NC);
-	memcpy(&y[Nx*NR],(double *)&fld->v[NG*NC],sizeof(double complex)*Nx*NC);
-	memcpy(&y[2*Nx*NR],(double *)&fld->sig[NG*NC],sizeof(double complex)*Nx*NC);
+	memcpy(&y[0],(double *)&fld->u[istart],sizeof(double complex)*Nx*NC);
+	memcpy(&y[Nx*NR],(double *)&fld->v[istart],sizeof(double complex)*Nx*NC);
+	memcpy(&y[2*Nx*NR],(double *)&fld->sig[istart],sizeof(double complex)*Nx*NC);
 	
 	return;
 
@@ -26,9 +26,9 @@ void global_c2r_dt(double *y, Field *fld) {
 void global_r2c(const double *y, Field *fld) {
 /* Used to unpack the real gsl y array into the complex u,v,sig arrays */
 
-	memcpy(&fld->u[NG*NC],(double complex *)&y[0],sizeof(double complex)*Nx*NC);
-	memcpy(&fld->v[NG*NC],(double complex *)&y[Nx*NR],sizeof(double complex)*Nx*NC);
-	memcpy(&fld->sig[NG*NC],(double complex *)&y[2*Nx*NR],sizeof(double complex)*Nx*NC);
+	memcpy(&fld->u[istart],(double complex *)&y[0],sizeof(double complex)*Nx*NC);
+	memcpy(&fld->v[istart],(double complex *)&y[Nx*NR],sizeof(double complex)*Nx*NC);
+	memcpy(&fld->sig[istart],(double complex *)&y[2*Nx*NR],sizeof(double complex)*Nx*NC);
 	return;
 }
 void calc_deriv(double complex *in, double complex *dxout, double complex *dyout

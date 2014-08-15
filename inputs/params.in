@@ -1,7 +1,7 @@
 # Input Parameters
-Nx = 4096
-Ny = 128
-Lx = 60.0
+Nx = 2048
+Ny = 32
+Lx = 80.0
 Ly = 30.0
 xsoft = .6
 c = 1 

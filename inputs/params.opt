@@ -21,11 +21,11 @@
 
 ## Derivative Order
 
-#+SECDERIV
++SECDERIV
 #+FOURTHDERIV
 #+SIXTHDERIV
 #+EIGTHDERIV
-+TENTHDERIV
+#+TENTHDERIV
 
 ## Restart option
 ## Restart files should be placed in the inputs directory 
@@ -36,15 +36,15 @@
 
 ## Boundary conditions
 
-+WAVEKILLBC
+#+WAVEKILLBC
 
 ## OpenMP parallization Specify # of threads  if OPENMP is flagged
 
 +OPENMP
-+NUMTHREADS 8
++NUMTHREADS 4
 
 ## Output options
-#+OUTGHOST
++OUTGHOST
 #+OUTPHI
 #+OUTDERIV
 
