@@ -53,7 +53,7 @@ typedef struct Parameters {
 	
 	int Nx, Ny, Nk;
 	double Lx, Ly, dx;
-	double c, omega, xs, nu, q, Mp, sig0;
+	double h,c, omega, xs, nu, q, Mp, sig0;
 	double t0, endt, tau;
 	int numf;
 	char restartfname[50];
@@ -134,3 +134,4 @@ void output_reals(Field *fld);
 void wavekillbc(Field *fld,double dt);
 void output_defines(void);
 void restart(Field *fld);
+void shear_advection(Field *fld,double dt);

@@ -1,6 +1,5 @@
 #define WAVEEVOLVE
 #define BACKEVOLVE
-#define SECDERIV
+#define TENTHDERIV
 #define OPENMP
-#define NUMTHREADS 4
-#define OUTGHOST
+#define NUMTHREADS 8

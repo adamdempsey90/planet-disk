@@ -80,16 +80,25 @@ int main (void) {
                                            &sys, 
                                            &t, t1,
                                            &h, y);
-    dt = t-dt;
-
-	printf ("\t step size = %.5e, at t=%.5e \n", dt, t);
-    if (status != GSL_SUCCESS) {
+     if (status != GSL_SUCCESS) {
      	printf("ERROR With Step...\nTerminating Run...\n");
         break;
     }
+    dt = t-dt;
+#ifdef SHEARSPLIT
+	global_r2c(y,fld);
+	shear_advection(fld,dt);
+#ifndef WAVEKILLBC
+	global_c2r(y,fld);
+#endif
+#endif
+	printf ("\t step size = %.5e, at t=%.5e \n", dt, t);
+   
 
 #ifdef WAVEKILLBC
+#ifndef SHEARSPLIT
 	global_r2c(y,fld);
+#endif
 	wavekillbc(fld,dt);
 	global_c2r(y,fld);
 #endif

@@ -11,9 +11,9 @@
 
 +BACKEVOLVE
 
-## Include the non-linear terms in the wave equations
+## Operator split on background shear term
 
-#+NONLINEAR
+#+SHEARSPLIT
 
 ## Use the incompressible viscosous tensor
 
@@ -21,11 +21,11 @@
 
 ## Derivative Order
 
-+SECDERIV
+#+SECDERIV
 #+FOURTHDERIV
 #+SIXTHDERIV
 #+EIGTHDERIV
-#+TENTHDERIV
++TENTHDERIV
 
 ## Restart option
 ## Restart files should be placed in the inputs directory 
@@ -41,10 +41,10 @@
 ## OpenMP parallization Specify # of threads  if OPENMP is flagged
 
 +OPENMP
-+NUMTHREADS 4
++NUMTHREADS 8
 
 ## Output options
-+OUTGHOST
+#+OUTGHOST
 #+OUTPHI
 #+OUTDERIV
 

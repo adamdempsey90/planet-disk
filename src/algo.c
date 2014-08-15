@@ -41,7 +41,7 @@ void fill_rhs(Field *fld, double t) {
 	int i;
 	double qom = (fld->Params->q)*(fld->Params->omega);
 	double om2 = 2*(fld->Params->omega);
-	double k,x;
+	double k;
 	double complex phi, dxphi;
 	
 /* Fill the derivative arrays */
@@ -56,7 +56,7 @@ void fill_rhs(Field *fld, double t) {
 //	printf("\tAdding Non-Convolution Terms...\n");
 
 #ifdef OPENMP 
-	#pragma omp parallel private(i,k,x,phi,dxphi) shared(fld) num_threads(NUMTHREADS)
+	#pragma omp parallel private(i,k,phi,dxphi) shared(fld) num_threads(NUMTHREADS)
 	#pragma omp for schedule(static)
 #endif
 	for(i=istart;i<iend;i++) {
@@ -68,13 +68,18 @@ void fill_rhs(Field *fld, double t) {
 			if( k == 0 ) {
 #endif
 
-				x = fld->xx[i-istart];
+			
 				phi = calc_pot(fld->phi[i],t,fld->Params->tau);
 				dxphi = calc_pot(fld->dxphi[i],t,fld->Params->tau);
 
-				fld->dtu[i-istart] = qom*I*k*(fld->u[i])*x + om2*(fld->v[i]) - dxphi;
-				fld->dtv[i-istart] = qom*I*k*(fld->v[i])*x +(qom-om2)*(fld->u[i]) - I*k*phi;
-				fld->dtsig[i-istart] = qom*I*k*x*(fld->sig[i]);
+				fld->dtu[i-istart] =  om2*(fld->v[i]) - dxphi;
+				fld->dtv[i-istart] =  (qom-om2)*(fld->u[i]) - I*k*phi;
+				fld->dtsig[i-istart] = 0;
+#ifndef SHEARSPLIT
+				fld->dtu[i-istart] += qom*I*k*(fld->u[i])*(fld->xx[i-istart]);
+				fld->dtv[i-istart] += qom*I*k*(fld->v[i])*(fld->xx[i-istart]);
+				fld->dtsig[i-istart] += qom*I*k*(fld->sig[i])*(fld->xx[i-istart]);
+#endif
 		
 #ifndef BACKEVOLVE
 			}
@@ -156,6 +161,30 @@ void zero_derivs(Field *fld) {
 		fld->Tens->divPix[i] = 0;
 		fld->Tens->divPiy[i] = 0;
 	}
+	return;
+}
+void shear_advection(Field *fld,double dt) {
+	int i;
+	double qom = (fld->Params->q)*(fld->Params->omega);
+	dt /= 2;
+#ifdef OPENMP 
+	#pragma omp parallel private(i) shared(fld) num_threads(NUMTHREADS)
+	#pragma omp for schedule(static)
+#endif	
+	for(i=istart;i<iend;i++) {
+		fld->u[i] *= (1+I*(fld->kk[i])*qom*(fld->xx[i-istart])*dt)	
+						/(1-I*(fld->kk[i-istart])*qom*(fld->xx[i-istart])*dt);
+		fld->v[i] *= (1+I*(fld->kk[i])*qom*(fld->xx[i-istart])*dt)
+						/(1-I*(fld->kk[i-istart])*qom*(fld->xx[i-istart])*dt);
+		fld->sig[i] *= (1+I*(fld->kk[i])*qom*(fld->xx[i-istart])*dt)
+						/(1-I*(fld->kk[i-istart])*qom*(fld->xx[i-istart])*dt);
+// 		fld->u[i] *= (1+I*(fld->kk[i-istart])*qom*(fld->xx[i-istart])*dt);
+// 		fld->v[i] *= (1+I*(fld->kk[i-istart])*qom*(fld->xx[i-istart])*dt);
+// 		fld->sig[i] *= (1+I*(fld->kk[i-istart])*qom*(fld->xx[i-istart])*dt);
+	}
+
+	
+
 	return;
 }
 

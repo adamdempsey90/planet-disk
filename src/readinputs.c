@@ -3,7 +3,7 @@
 void read_input(Field *fld) {
 	FILE *f;
 	char garbage[100];
-	double Lx,Ly,xs,c,Mp,nu,q,omega,sig0,t0,tau,endt;
+	double h,Lx,Ly,xs,Mp,nu,q,omega,sig0,t0,tau,endt;
 	int numf;
 	
 	f=fopen("inputs/params.in","r");
@@ -14,7 +14,7 @@ void read_input(Field *fld) {
 	fscanf(f,"Lx = %lg \n",&Lx);
 	fscanf(f,"Ly =  %lg \n",&Ly);
 	fscanf(f,"xsoft =  %lg \n",&xs);
-	fscanf(f,"c =  %lg \n",&c);
+	fscanf(f,"h =  %lg \n",&h);
 	fscanf(f,"Mp =  %lg \n",&Mp);
 	fscanf(f,"nu =  %lg \n",&nu);
 	fscanf(f,"q =  %lg \n",&q);
@@ -30,12 +30,13 @@ void read_input(Field *fld) {
 	
 	fld->Params->Nx = Nx;
 	fld->Params->Ny= Ny;
-	fld->Params->Lx = Lx; 
-	fld->Params->Ly = Ly; 
-	fld->Params->xs = xs;
-	fld->Params->c = c;
+	fld->Params->Lx = Lx*h; 
+	fld->Params->Ly = Ly*h; 
+	fld->Params->xs = xs*h;
+	fld->Params->h = h;
+	fld->Params->c = h*omega;
 	fld->Params->Mp = Mp;
-	fld->Params->nu = nu;
+	fld->Params->nu = nu*h*h*omega;
 	fld->Params->q = q;
 	fld->Params->omega = omega;
 	fld->Params->sig0 = sig0;
@@ -52,7 +53,7 @@ void read_input(Field *fld) {
   	  Ly =  %lg\n \
   	  dx = %lg\n \
   	  xsoft =  %lg\n \
-  	  c =  %lg\n \
+  	  h =  %lg\n \
   	  Mp =  %lg\n \
   	  nu =  %lg\n \
   	  q =  %lg\n \
@@ -63,7 +64,7 @@ void read_input(Field *fld) {
   	  tau =  %lg\n \
   	  endt =  %lg\n \
   	  numf =  %d\n", 
-  	  fld->Params->Nx, fld->Params->Ny, fld->Params->Lx, fld->Params->Ly, fld->Params->dx, fld->Params->xs, fld->Params->c, 
+  	  fld->Params->Nx, fld->Params->Ny, fld->Params->Lx, fld->Params->Ly, fld->Params->dx, fld->Params->xs, fld->Params->h, 
   	  fld->Params->Mp, fld->Params->nu, fld->Params->q, fld->Params->omega, fld->Params->sig0,
   	  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf);
   
