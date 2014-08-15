@@ -3,7 +3,7 @@
 void visc_tens(Field *fld) {
 /* Calculates the stress tensor including viscosity and pressure */
 
-	int i,j,indx;
+	int i;
 	double twoth = (2.0/3.0);
 	double qom = (fld->Params->q)*(fld->Params->omega);
 	double c = (fld->Params->c)*(fld->Params->c);
@@ -15,17 +15,24 @@ void visc_tens(Field *fld) {
 	#pragma omp parallel private(i,divv) shared(fld) num_threads(NUMTHREADS)
 	#pragma omp for schedule(static)
 #endif	
-	for(i=istart;i<iend;i++) {
-		divv = fld->dxu[i] + fld->dyv[i];
-		divv *= twoth;
-		fld->Tens->Txx[i] = 2*(fld->dxu[i])-divv;
-		fld->Tens->Txy[i] = fld->dxv[i] + fld->dyu[i];
-		fld->Tens->Tyy[i] = 2*(fld->dyv[i]) - divv;
-		fld->Tens->Pixx[i] = -c*(fld->sig[i]);
-		fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
-		fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
-		fld->Tens->divPix[i] = 0;
-		fld->Tens->divPiy[i] = 0;
+	for(i=0;i<NTOTC;i++) {
+		if (i<istart || i>=iend) {
+			fld->Tens->Pixx[i] = -c*(fld->sig[i]);
+			fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
+			fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
+		}
+		else {		
+			divv = fld->dxu[i] + fld->dyv[i];
+			divv *= twoth;
+			fld->Tens->Txx[i] = 2*(fld->dxu[i])-divv;
+			fld->Tens->Txy[i] = fld->dxv[i] + fld->dyu[i];
+			fld->Tens->Tyy[i] = 2*(fld->dyv[i]) - divv;
+			fld->Tens->Pixx[i] = -c*(fld->sig[i]);
+			fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
+			fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
+			fld->Tens->divPix[i] = 0;
+			fld->Tens->divPiy[i] = 0;
+		}
 	}
 	convolve(&fld->Tens->Txx[istart],&fld->sig[istart],&fld->Tens->Pixx[istart],nu);
 	convolve(&fld->Tens->Txy[istart],&fld->sig[istart],&fld->Tens->Pixy[istart],nu);
@@ -33,22 +40,7 @@ void visc_tens(Field *fld) {
 
 /* Set Tensor B.C's */
 
-	for(i=0;i<NG;i++) {
-		for(j=0;j<NC;j++) {
-			indx = j+NC*(NG-1 + NG-i);
-			fld->Tens->Pixx[CINDX] = conj(fld->Tens->Pixx[indx]);
-			fld->Tens->Pixy[CINDX] = conj(fld->Tens->Pixy[indx]);
-			fld->Tens->Piyy[CINDX] = conj(fld->Tens->Piyy[indx]);
-		}
-	}
-	for(i=Nx+NG;i<Nx+2*NG;i++) {
-		for(j=0;j<NC;j++) {
-			fld->Tens->Pixx[CINDX] = -c*(fld->sig[CINDX]);
-			fld->Tens->Pixy[CINDX] = -nu*qom*(fld->sig[CINDX]);
-			fld->Tens->Piyy[CINDX] = -c*(fld->sig[CINDX]);
-		}
-	}
-			
+
 
 	return;
 }
@@ -58,9 +50,9 @@ void add_visc(Field *fld) {
 	visc_tens(fld);
 	
 /* Calculate div(Pi) */	
-	calc_deriv(fld->Tens->Pixx,fld->Tens->divPix,NULL,fld->Params->dx,fld->k);
-	calc_deriv(fld->Tens->Pixy,fld->Tens->divPiy,fld->Tens->divPix,fld->Params->dx,fld->k);
-	calc_deriv(fld->Tens->Piyy,NULL,fld->Tens->divPiy,fld->Params->dx,fld->k);
+	calc_deriv(fld->Tens->Pixx,fld->Tens->divPix,NULL,fld->Params->dx,fld->kk);
+	calc_deriv(fld->Tens->Pixy,fld->Tens->divPiy,fld->Tens->divPix,fld->Params->dx,fld->kk);
+	calc_deriv(fld->Tens->Piyy,NULL,fld->Tens->divPiy,fld->Params->dx,fld->kk);
 	
 
 /* Convolve with 1/Sigma */

@@ -42,24 +42,22 @@ void calc_deriv(double complex *in, double complex *dxout, double complex *dyout
 	
 		The result is added to dxout and dyout arrays.
 */
-	int i,j,d;
+	int i,d;
 	double complex temp;
 #ifdef OPENMP 
-	#pragma omp parallel private(i,j,temp,d) shared(k,in,dxout,dyout) num_threads(NUMTHREADS)
+	#pragma omp parallel private(i,temp,d) shared(k,in,dxout,dyout,dx) num_threads(NUMTHREADS)
 	#pragma omp for schedule(static)
 #endif	
-	for(i=NG;i<Nx+NG;i++) {
-		for(j=0;j<NC;j++) { 
-			if (dyout != NULL) dyout[CINDX] += I*k[j]*in[CINDX];
+	for(i=istart;i<iend;i++) {
+			if (dyout != NULL) dyout[i] += I*k[i-istart]*in[i];
 			if (dxout != NULL) {
 				temp = 0;
 				for(d=0;d<2*NG;d++) {
-					temp += in[j+NC*(i+deriv.ind[d])]*deriv.coeffs[d];
+					temp += in[i+NC*deriv.ind[d]]*deriv.coeffs[d];
 
 				}						
-				dxout[CINDX] += temp/dx;
+				dxout[i] += temp/dx;
 			}
-		}
 	}				
 
 	

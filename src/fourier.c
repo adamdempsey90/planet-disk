@@ -33,7 +33,7 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 
 /* Form product in real space */
 #ifdef OPENMP 
-	#pragma omp parallel private(i) shared(wr1,wr2) num_threads(NUMTHREADS)
+	#pragma omp parallel private(i) shared(wr1,wr2,wr3) num_threads(NUMTHREADS)
 	#pragma omp for schedule(static)
 #endif	
 	for(i=0;i<Nx*NR;i++) wr3[i] = wr1[i]*wr2[i]/(Ny*Ny);

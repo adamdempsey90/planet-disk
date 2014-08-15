@@ -12,10 +12,6 @@
 #include <sys/stat.h>
 
 
-#ifdef OPENMP
-#define NUMTHREADS 8
-#endif
-
 
 #ifdef SECDERIV
 	#define NG 1
@@ -78,8 +74,7 @@ typedef struct Field {
 	
 	Stress *Tens;
 
-	double *x, *y, *k;
-	
+	double *x, *y, *k, *kk, *xx;
 	double complex *u, *v, *sig;
 	double complex *dxu, *dxv, *dxsig;
 	double complex *dyu, *dyv, *dysig;
@@ -89,6 +84,12 @@ typedef struct Field {
 		
 
 } Field;
+typedef struct Cons {
+	
+	double complex *Mx, *My;
+	double *rMx, *rMy;
+
+} Cons;
 
 typedef struct Derivative {
 

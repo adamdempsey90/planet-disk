@@ -14,6 +14,8 @@ class Field():
 		self.x=coords[:Nx+2*NG]
 		self.k=coords[Nx+2*NG:Nx+2*NG+NC]
 		self.y=coords[Nx+2*NG+NC:]
+		self.dx = diff(self.x)[0]
+		self.Lx = self.Nx*self.dx
 		
 def realspace(fld):
 	x=hstack((-fld.x[::-1],fld.x))
@@ -49,7 +51,7 @@ def tens(num,Nx,Ny,NG=0,dir=''):
 	dypi = fromfile(dir+'divpiy_'+str(num)+'.dat',dtype='complex').reshape((Nx+2*NG,NC))
 	return pixx,pixy,piyy,dxpi,dypi
 	
-def plotfld(fld,q,i,mirror=False,xlims=(0,0)):
+def plotfld(fld,q,i,xlims=(0,0)):
 	
 	tstr = 'mode #'+str(i)+', k = ' + str(fld.k[i])
 	x = fld.x
@@ -65,13 +67,7 @@ def plotfld(fld,q,i,mirror=False,xlims=(0,0)):
 	else:
 		print "Not valid variable name"
 		return
-	
-	if mirror:
-		x = hstack((-fld.x[::-1],fld.x))
-		if q=='u' or q=='v':
-			dat = vstack((-conj(dat[::-1,:]),dat))
-		else:
-			dat = vstack((conj(dat[::-1,:]),dat))
+
 	
 	figure()
 	if xlims[0]!=0 and xlims[1]!=0:
@@ -87,4 +83,3 @@ def plotfld(fld,q,i,mirror=False,xlims=(0,0)):
 	xlabel('x')
 	title(tstr)
 	return
-	

@@ -38,7 +38,7 @@ int func (double t, const double y[], double f[],void *params) {
 }
 void fill_rhs(Field *fld, double t) {
 /* 		Fill the RHS of the EOM */
-	int i,j,indx;
+	int i;
 	double qom = (fld->Params->q)*(fld->Params->omega);
 	double om2 = 2*(fld->Params->omega);
 	double k,x;
@@ -47,37 +47,34 @@ void fill_rhs(Field *fld, double t) {
 /* Fill the derivative arrays */
 //	printf("\tCalculating Derivatives...\n");
 
-	calc_deriv(fld->u,fld->dxu,fld->dyu,fld->Params->dx,fld->k);
-	calc_deriv(fld->v,fld->dxv,fld->dyv,fld->Params->dx,fld->k);
-	calc_deriv(fld->sig,fld->dxsig,fld->dysig,fld->Params->dx,fld->k);
+	calc_deriv(fld->u,fld->dxu,fld->dyu,fld->Params->dx,fld->kk);
+	calc_deriv(fld->v,fld->dxv,fld->dyv,fld->Params->dx,fld->kk);
+	calc_deriv(fld->sig,fld->dxsig,fld->dysig,fld->Params->dx,fld->kk);
 
 //	output_derivs(fld);
 /*	Fill RHS arrays with any non-convolution terms*/	
 //	printf("\tAdding Non-Convolution Terms...\n");
 
 #ifdef OPENMP 
-	#pragma omp parallel private(i,j,indx,k,x,phi,dxphi) shared(fld) num_threads(NUMTHREADS)
+	#pragma omp parallel private(i,k,x,phi,dxphi) shared(fld) num_threads(NUMTHREADS)
 	#pragma omp for schedule(static)
 #endif
-	for(i=NG;i<Nx+NG;i++) {
-		indx = i-NG;
-		for(j=0;j<NC;j++) {
-			
+	for(i=istart;i<iend;i++) {
+			k = fld->kk[i-istart];			
 #ifndef BACKEVOLVE
-			if( j != 0) {
+			if( k != 0) {
 #endif
 #ifndef WAVEEVOLVE 
-			if( j == 0 ) {
+			if( k == 0 ) {
 #endif
 
-				k = fld->k[j];
-				x = fld->x[i];
-				phi = calc_pot(fld->phi[CINDX],t,fld->Params->tau);
-				dxphi = calc_pot(fld->dxphi[CINDX],t,fld->Params->tau);
+				x = fld->xx[i-istart];
+				phi = calc_pot(fld->phi[i],t,fld->Params->tau);
+				dxphi = calc_pot(fld->dxphi[i],t,fld->Params->tau);
 
-				fld->dtu[j+NC*indx] = qom*I*k*(fld->u[CINDX])*x + om2*(fld->v[CINDX]) - dxphi;
-				fld->dtv[j+NC*indx] = qom*I*k*(fld->v[CINDX])*x +(qom-om2)*(fld->u[CINDX]) - I*k*phi;
-				fld->dtsig[j+NC*indx] = qom*I*k*x*(fld->sig[CINDX]);
+				fld->dtu[i-istart] = qom*I*k*(fld->u[i])*x + om2*(fld->v[i]) - dxphi;
+				fld->dtv[i-istart] = qom*I*k*(fld->v[i])*x +(qom-om2)*(fld->u[i]) - I*k*phi;
+				fld->dtsig[i-istart] = qom*I*k*x*(fld->sig[i]);
 		
 #ifndef BACKEVOLVE
 			}
@@ -85,11 +82,11 @@ void fill_rhs(Field *fld, double t) {
 #ifndef WAVEEVOLVE 
 			}
 #endif
-		}
+	
 	}
 	
-/* Start adding the convolutions. */
-//	printf("\tAdding Convolution Terms...\n");
+/* Start adding the convolutions. 
+   Start with advection and mass flux terms */
 
 	convolve(&fld->u[istart],&fld->dxu[istart],fld->dtu,-1);
 	convolve(&fld->v[istart],&fld->dyu[istart],fld->dtu,-1);
@@ -118,11 +115,11 @@ void fill_rhs(Field *fld, double t) {
 #endif
 #ifndef WAVEEVOLVE
 
-	for(i=0;i<Nx;i++) {
+	for(i=NC;i<Nx*NC;i++) {
 		for(j=1;j<NC;j++) {	
-			fld->dtu[j+NC*i] = 0;
-			fld->dtv[j+NC*i] = 0;
-			fld->dtsig[j+NC*i] = 0;
+			fld->dtu[CINDX] = 0;
+			fld->dtv[CINDX] = 0;
+			fld->dtsig[CINDX] = 0;
 		}
 	}
 
@@ -142,6 +139,10 @@ double complex calc_pot(double complex phi,double t, double tau) {
 void zero_derivs(Field *fld) {
 	int i;
 
+#ifdef OPENMP 
+	#pragma omp parallel private(i) shared(fld) num_threads(NUMTHREADS)
+	#pragma omp for schedule(static)
+#endif	
 	for(i=0;i<NTOTC;i++) {
 		fld->dxu[i] = 0;
 		fld->dxv[i]= 0;

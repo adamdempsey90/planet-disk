@@ -6,7 +6,7 @@ void init(Field *fld) {
 	double Ly = fld->Params->Ly;
 	
 	printf("\t Initializing Coordinates...\n");
-	for(i=0;i<(Nx+2*NG);i++) fld->x[i] = (i-NG+.5)*(Lx/Nx);
+	for(i=0;i<(Nx+2*NG);i++) fld->x[i] = -.5*Lx+(i-NG+.5)*(Lx/Nx);
 	for(i=0;i<Ny;i++) fld->y[i] = -.5*Ly + (i+.5)*(Ly/Ny);
 	printf("\t Initializing Boundary Conditions...\n");
 	for(i=0;i<NC;i++) {
@@ -22,6 +22,8 @@ void init(Field *fld) {
 #endif	
 	for(i=NG;i<Nx+NG;i++) {
 		for(j=0;j<NC;j++) {
+			fld->kk[CINDX-istart] = fld->k[j];
+			fld->xx[CINDX-istart] = fld->x[i];
 			fld->u[CINDX] = 0;
 			fld->v[CINDX] = 0;
 			if(j==0)	fld->sig[CINDX] = fld->Params->sig0;
@@ -170,8 +172,10 @@ void allocate_field(Field *fld) {
 	fld->Tens = (Stress *)malloc(sizeof(Stress));
 		
 	fld->x = (double *)malloc(sizeof(double)*(Nx+2*NG));
+	fld->xx = (double *)malloc(sizeof(double)*Nx*NC);
 	fld->y = (double *)malloc(sizeof(double)*Ny);
 	fld->k = (double *)malloc(sizeof(double)*NC);
+	fld->kk = (double*)malloc(sizeof(double)*Nx*NC);
 	
 	fld->u = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->v = (double complex *)malloc(sizeof(double complex)*NTOTC);
@@ -214,9 +218,10 @@ void allocate_field(Field *fld) {
 void free_field(Field *fld) {
 
 	free(fld->x);
+	free(fld->xx);
 	free(fld->y);
 	free(fld->k);
-	
+	free(fld->kk);
 	free(fld->u);
 	free(fld->v);
 	free(fld->sig);

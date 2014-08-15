@@ -43,7 +43,12 @@ void output(Field *fld) {
 void output_coords(Field *fld) {
 	FILE *f;
 	f = fopen("outputs/coords.dat","wb");
+#ifdef OUTGHOST
+	fwrite(fld->x,sizeof(double),Nx+2*NG,f);
+
+#else
 	fwrite(&fld->x[NG],sizeof(double),Nx,f);
+#endif
 	fwrite(fld->k,sizeof(double),NC,f);
 	fwrite(fld->y,sizeof(double),Ny,f);
 	fclose(f);

@@ -1,9 +1,14 @@
 #include "planetdisk.h"
 
-double complex *Twd, *dxFb, *dxFp, *Th;
+Cons *cns; 
+double *Twd, *dxFb, *dxFp, *Th;
+double *Fb, *Fp, *Ft;
 
 void amf(Field *fld) {
 	int i,j;
+	double om2 = 2*(fld->Params->omega);
+	
+
 	
 	calc_deriv(fld->u,fld->dxu,fld->dyu,fld->Params->dx,fld->k);
 	calc_deriv(fld->v,fld->dxv,fld->dyv,fld->Params->dx,fld->k);
@@ -13,8 +18,18 @@ void amf(Field *fld) {
 	calc_deriv(fld->Tens->Pixy,fld->Tens->divPiy,NULL,fld->Params->dx,fld->k);
 	calc_deriv(fld->Tens->Piyy,NULL,fld->Tens->divPiy,fld->Params->dx,fld->k);
 
- 	convolve_inv(&fld->sig[istart],&fld->Tens->divPiy[istart],Twd,1);
+	convolve(&fld->u[istart],&fld->sig[istart],&cns->Mx[istart],1);
+	convolve(&fld->v[istart],&fld->sig[istart],&cns->My[istart],1);
 
+	
+
+
+	for(i=0;i<Nx+2*NG;i++) {
+		Fb
+		for(j=1;j<NC;j++) {
+			Fb[i] += 2*creal((fld->sig[CINDX])*conj(fld->u[CINDX])*(fld->v[NC*i]+om2*(fld->x[i]))
+					- fld->Tens->Pixy[NC*i]);
+			
 
 
 	return;
@@ -22,8 +37,34 @@ void amf(Field *fld) {
 
 
 
+void init_amf(void) {
 
+	cns = (Cons *)malloc(sizeof(Cons));
+	cns->Mx = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	cns->My = (double complex *)malloc(sizeof(double complex)*NTOTC);
+	cns->rMx = (double *)(cns->Mx);
+	cns->rMy = (double *)(cns->My); 
 
+	Twd = (double *)malloc(sizeof(double)*Nx);
+	dxFb = (double *)malloc(sizeof(double)*Nx);
+	dxFp = (double *)malloc(sizeof(double)*Nx);
+	Fb = (double *)malloc(sizeof(double)*(Nx+2*NG));
+	Fp = (double *)malloc(sizeof(double)*(Nx+2*NG));
+	Ft = (double *)malloc(sizeof(double)*(Nx+2*NG));
+	Th = (double *)malloc(sizeof(double)*Nx);
+	
+	return;
+}
+
+void free_amf(void) {
+
+	free(cns->Mx); free(cns->My);
+	free(cns);
+	free(Twd); free(dxFb); free(dxFp);
+	free(Fb); free(Fp); free(Ft);
+	free(Th);
+
+}
 
 
 

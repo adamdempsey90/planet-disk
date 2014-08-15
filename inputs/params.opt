@@ -9,7 +9,7 @@
 
 ## Evolve the mean components
 
-#+BACKEVOLVE
++BACKEVOLVE
 
 ## Include the non-linear terms in the wave equations
 
@@ -38,9 +38,10 @@
 
 +WAVEKILLBC
 
-## OpenMP parallization
+## OpenMP parallization Specify # of threads  if OPENMP is flagged
 
 +OPENMP
++NUMTHREADS 8
 
 ## Output options
 #+OUTGHOST
