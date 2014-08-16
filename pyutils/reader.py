@@ -114,6 +114,45 @@ def animate(q,k,t,Nx,Ny,dir='',scale=True):
 			ylim((hstack((real(dat.min()),imag(dat.min()))).min(),hstack((real(dat.max()),imag(dat.max()))).max()))
 		fig.canvas.draw()
 	return
+	
+	
+def animate_real(q,t,Nx,Ny,dir='',logscale=False):
+	
+	dat= zeros((Nx,Ny,len(t)))
+	fld = Field(t[0],Nx,Ny,dir=dir)
+	x,y = meshgrid(fld.y,fld.x)
+	for i in t:
+		fld = Field(i,Nx,Ny,dir=dir)
+		vx,vy,dens,_,_ = realspace(fld)
+		if q=='vx':
+			dat[:,:,i] = vx
+			tstr = 'vx at '
+		elif q=='vy':
+			dat[:,:,i] = vy
+			tstr = 'vy at '
+		elif q=='dens':
+			dat[:,:,i] = dens
+			tstr = '$\Sigma$ at '
+		else:
+			print 'Not a valid variable name'
+			return
+	
+	
+	d_min = dat.min(); d_max = dat.max();
+
+	fig=figure()
+	for i in t:
+		clf()
+		if logscale:
+			imshow(log10(dat[:,:,i]).transpose(),aspect='auto',vmin=log10(d_min),vmax=log10(d_max))
+		else:
+			imshow(dat[:,:,i].transpose(),aspect='auto',vmin=d_min,vmax=d_max)
+		colorbar()
+		title(tstr + 't='+str(i)+'$\Omega$')
+		fig.canvas.draw()
+		
+		
+	return
 def plotreal(fld,tstr=''):
 	vx,vy,dens,x,y = realspace(fld)
 	figure()
