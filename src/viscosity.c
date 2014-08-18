@@ -21,7 +21,8 @@ void visc_tens(Field *fld) {
 			fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
 			fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
 		}
-		else {		
+		else {
+			
 			divv = fld->dxu[i] + fld->dyv[i];
 			divv *= twoth;
 			fld->Tens->Txx[i] = 2*(fld->dxu[i])-divv;
@@ -29,7 +30,7 @@ void visc_tens(Field *fld) {
 			fld->Tens->Tyy[i] = 2*(fld->dyv[i]) - divv;
 			fld->Tens->Pixx[i] = -c*(fld->sig[i]);
 			fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
-			fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
+			fld->Tens->Piyy[i] = -c*(fld->sig[i]);		
 			fld->Tens->divPix[i] = 0;
 			fld->Tens->divPiy[i] = 0;
 		}

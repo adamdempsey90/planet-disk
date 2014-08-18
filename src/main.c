@@ -25,7 +25,7 @@ int main (void) {
 	printf("Initializing FFTW...\n");
 
 	init_fft();
-
+	
 	printf("Initializing Field...\n");
 
 	init(fld);
@@ -67,6 +67,7 @@ int main (void) {
   	i=1;
   	func_calls = 0;
   
+  	printf("max mode #%d at k=%lg\n",Nmax, kmax);
 	printf("Starting the Time Loop...\n");
 	printf("\t Starting Time = %lg \t Ending Time = %lg \n",t,t1);
 	

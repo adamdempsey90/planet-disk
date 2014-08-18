@@ -98,7 +98,8 @@ typedef struct Derivative {
 
 } Derivative;
 		
-int Nx, Ny, outnum, dxoutnum, func_calls, dtoutnum,pioutnum;
+int Nx, Ny, Nmax, outnum, dxoutnum, func_calls, dtoutnum,pioutnum;
+double kmax;
 Derivative deriv; 
 
 int func (double t, const double y[], double f[],void *params);

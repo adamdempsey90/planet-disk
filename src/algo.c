@@ -68,7 +68,6 @@ void fill_rhs(Field *fld, double t) {
 			if( k == 0 ) {
 #endif
 
-			
 				phi = calc_pot(fld->phi[i],t,fld->Params->tau);
 				dxphi = calc_pot(fld->dxphi[i],t,fld->Params->tau);
 
@@ -138,7 +137,7 @@ void fill_rhs(Field *fld, double t) {
 double complex calc_pot(double complex phi,double t, double tau) {
 	
 	if (tau==0) return phi;
-	else return (1-cexp(-t/tau))*phi;
+	else return (1-exp(-t/tau))*phi;
 	
 }
 void zero_derivs(Field *fld) {

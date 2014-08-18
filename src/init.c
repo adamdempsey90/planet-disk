@@ -75,6 +75,9 @@ void init(Field *fld) {
 		fld->Tens->Tyy[i] = 0;
 	}
 	
+	kmax = fld->k[Nmax];
+
+	
 #ifdef RESTART
 	restart(fld);
 #endif

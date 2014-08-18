@@ -176,29 +176,39 @@ void output_reals(Field *fld) {
 }
 
 void output_defines(void) {
-
+	FILE *f = fopen("outputs/params.txt","w");
+	fprintf(f,"Configuration parameters:\n");
 #ifdef RESTART
 	printf("\t Restarting from file\n");
+	fprintf(f,"\tRestarting from file\n");
 #endif
 #ifdef WAVEEVOLVE
 	printf("\t Evolving wave componenets\n");
+	fprintf(f,"\tEvolving wave componenets\n");
 #endif
 #ifdef BACKEVOLVE
 	printf("\t Evolving mean componenets\n");
+	fprintf(f,"\tEvolving mean componenets\n");
 #endif
 	printf("\t Finite difference order is %d \n",2*NG);
+	fprintf(f,"\tFinite difference order is %d \n",2*NG);
 #ifdef SIMPLEVISC
 	printf("\t Using the incompressible viscous stress tensor\n");
+	fprintf(f,"\tUsing the incompressible viscous stress tensor\n");
 #endif
 #ifdef WAVEKILLBC
 	printf("\t Enforcing wave killing boundary conditions\n");
+	fprintf(f,"\tEnforcing wave killing boundary conditions\n");
 #endif
 #ifdef OPENMP
 	printf("\t Using OpenMp with %d threads\n", NUMTHREADS);
+	fprintf(f,"\tUsing OpenMp with %d threads\n", NUMTHREADS);
 #endif
 
 #ifdef OUTGHOST
 	printf("\t Outputting the ghost zones\n");
+	fprintf(f,"\tOutputting the ghost zones\n");
 #endif
+	fclose(f);
 	return;
 }

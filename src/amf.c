@@ -3,12 +3,14 @@
 Cons *cns; 
 double *Twd, *dxFb, *dxFp, *Th;
 double *Fb, *Fp, *Ft;
+double complex *twdpi;
 
 void amf(Field *fld) {
-	int i,j;
+	int i,j,indx;
 	double om2 = 2*(fld->Params->omega);
 	
-
+	
+	for(i=0;i<Nx*NC;i++) twdpi[i] = 0;
 	
 	calc_deriv(fld->u,fld->dxu,fld->dyu,fld->Params->dx,fld->k);
 	calc_deriv(fld->v,fld->dxv,fld->dyv,fld->Params->dx,fld->k);
@@ -21,6 +23,22 @@ void amf(Field *fld) {
 	convolve(&fld->u[istart],&fld->sig[istart],&cns->Mx[istart],1);
 	convolve(&fld->v[istart],&fld->sig[istart],&cns->My[istart],1);
 
+	convolve_inv(&fld->sig[istart],&fld->Tens->divPiy[istart],twdpi,1);
+
+
+	for(i=0;i<Nx+2*NG;i++) {
+		Twd=[i] = 0;
+		Fb[i] = 0;
+		for(j=0;j<NC;j++) {
+			
+			if (i<Nx) {
+				indx = j+(i+NG)*NC
+				Twd[i] += -(fld->sig[istart+i*NC])*conj(fld->u[indx])*(fld->dxv[indx])
+					+(fld->dxv[istart+i*NC]+om2*(fld->x[i+NG]))*conj(fld->sig[indx])*(fld->u[indx])
+					+twdpi[i*NC];
+			}
+			Fb[i] += 
+		}
 	
 
 
@@ -52,6 +70,8 @@ void init_amf(void) {
 	Fp = (double *)malloc(sizeof(double)*(Nx+2*NG));
 	Ft = (double *)malloc(sizeof(double)*(Nx+2*NG));
 	Th = (double *)malloc(sizeof(double)*Nx);
+	
+	twdpi = (double complex *)malloc(sizeof(double complex)*Nx*NC);
 	
 	return;
 }

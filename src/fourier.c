@@ -2,6 +2,7 @@
 #include <fftw3.h>
 
 
+int fNC, fNR;
 double complex *wc1, *wc2, *wc3;
 double *wr1, *wr2, *wr3;
 double *mask;
@@ -99,13 +100,16 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 
 
 void init_fft(void) {
-	int i,j,Nmax;
+	int i,j;
 	
 	int n[] = {Ny};
 	int howmany = Nx;
 	int idist=NC, odist=NR;
 	int istride=1, ostride=1;
 	int *inembed=NULL, *onembed=NULL;
+
+	Nmax = floor(2./3*NC);
+
 	
 	wc1 = (double complex *)malloc(sizeof(double complex)*Nx*NC);
 	wr1 = (double *)wc1;
@@ -113,10 +117,10 @@ void init_fft(void) {
 	wr2 = (double *)wc2;
 	wc3 = (double complex *)malloc(sizeof(double complex)*Nx*NC);
 	wr3 = (double *)wc3;
+
 	mask = (double *)malloc(sizeof(double)*Nx*NC);
 	
-	Nmax = (2./3)*(NC-1);
-
+	
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<NC;j++) {
 			if (j < Nmax) mask[CINDX] = 1;

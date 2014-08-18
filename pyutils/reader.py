@@ -16,6 +16,8 @@ class Field():
 		self.y=coords[Nx+2*NG+NC:]
 		self.dx = diff(self.x)[0]
 		self.Lx = self.Nx*self.dx
+		self.Ly = 2*self.Ny*self.y[0]/(1-self.Ny)
+	
 		
 def realspace(fld):
 #	x=hstack((-fld.x[::-1],fld.x))
@@ -86,7 +88,7 @@ def plotfld(fld,q,ilist,xlims=(0,0)):
 		title(tstr)
 	return
 
-def animate(q,k,t,Nx,Ny,dir='',scale=True):
+def animate(q,k,t,Nx,Ny,dt=1,dir='',scale=True):
 	
 	dat= zeros((Nx,len(t)),dtype='complex')
 	x = Field(t[0],Nx,Ny,dir=dir).x
@@ -102,21 +104,43 @@ def animate(q,k,t,Nx,Ny,dir='',scale=True):
 			print 'Not a valid variable name'
 			return
 	
-	fig=figure()
+	fig=figure(figsize=(15,10))
+	if scale:
+		if k==0:
+			qmin = real(dat.min())
+			qmax = real(dat.max())
+			
+			print qmin,qmax
+		else:
+			qmin = dat.min()
+			qmax = dat.max()
+			if real(qmin) < imag(qmin):
+				qmin = real(qmin)
+			else:
+				qmin = imag(qmin)
+			
+			if real(qmax) > imag(qmax):
+				qmax = real(qmax)
+			else:
+				qmax = imag(qmax)	
+			
 	for i in t:
 		clf()
 		if k==0:
 			plot(x,real(dat[:,i]))
+			
 		else:
 			plot(x,real(dat[:,i]),x,imag(dat[:,i]))
-		title('t='+str(i)+'$\Omega$')
+
 		if scale:
-			ylim((hstack((real(dat.min()),imag(dat.min()))).min(),hstack((real(dat.max()),imag(dat.max()))).max()))
+			ylim((qmin,qmax))
+		title('t='+str(i*dt)+'$\Omega$')
+		
 		fig.canvas.draw()
 	return
 	
 	
-def animate_real(q,t,Nx,Ny,dir='',logscale=False):
+def animate_real(q,t,Nx,Ny,dt=1,dir='',logscale=False):
 	
 	dat= zeros((Nx,Ny,len(t)))
 	fld = Field(t[0],Nx,Ny,dir=dir)
@@ -140,7 +164,7 @@ def animate_real(q,t,Nx,Ny,dir='',logscale=False):
 	
 	d_min = dat.min(); d_max = dat.max();
 
-	fig=figure()
+	fig=figure(figsize=(15,10))
 	for i in t:
 		clf()
 		if logscale:
@@ -148,7 +172,7 @@ def animate_real(q,t,Nx,Ny,dir='',logscale=False):
 		else:
 			imshow(dat[:,:,i].transpose(),aspect='auto',vmin=d_min,vmax=d_max)
 		colorbar()
-		title(tstr + 't='+str(i)+'$\Omega$')
+		title(tstr + 't='+str(i*dt)+'$\Omega$')
 		fig.canvas.draw()
 		
 		
@@ -169,5 +193,25 @@ def plotreal(fld,tstr=''):
 	pcolor(x,y,log10(dens)); colorbar()
 	xlabel('x')
 	title('log10($\Sigma$)      ' + tstr)
+	
+	return
+
+def calcTwd(fld,nu):
+	
+	dx = fld.dx
+	dy = fld.Ly / fld.Ny
+	
+	vx,vy,dens,x,y = realspace(fld)
+	
+	dxu,dyu = gradient(vx,dx,dy)
+	dxv,dyv = gradient(vy,dx,dy)
+	dxd,dyd = gradient(dens,dx,dy)
+	
+	pixy = nu*(dxv+dyu)
+	Ftot = dens*vx*vy
+	Fb = Ftot.mean(axis=1)
+	Fp = [Ftot[i,:]-f for i,f in enumerate(Fb)]
+	
+	
 	
 	return
