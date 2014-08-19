@@ -55,7 +55,7 @@ int main (void) {
 	const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
 
   	gsl_odeiv2_step * s  = gsl_odeiv2_step_alloc (T, gsl_size);
- 	gsl_odeiv2_control * c  = gsl_odeiv2_control_y_new (fld->Params->tol, fld->Params->tol);
+ 	gsl_odeiv2_control * c  = gsl_odeiv2_control_y_new (fld->Params->tol,0);
  	gsl_odeiv2_evolve * e  = gsl_odeiv2_evolve_alloc (gsl_size);
  
  
