@@ -55,6 +55,7 @@ typedef struct Parameters {
 	double Lx, Ly, dx;
 	double h,c, omega, xs, nu, q, Mp, sig0;
 	double t0, endt, tau;
+	double tol;
 	int numf;
 	char restartfname[50];
 	
@@ -102,7 +103,11 @@ int Nx, Ny, Nmax, outnum, dxoutnum, func_calls, dtoutnum,pioutnum;
 double kmax;
 Derivative deriv; 
 
-int func (double t, const double y[], double f[],void *params);
+//int func (double t, const double y[], double f[],void *params);
+
+void func(double t, Field *fld);
+int rk45_apply_step(Field *fld, double *t, double *h);
+
 void fill_rhs(Field *fld, double t);
 double complex calc_pot(double complex phi,double t, double tau);
 void convolve(double complex *q1, double complex *q2, double complex *res, double complex mult);
