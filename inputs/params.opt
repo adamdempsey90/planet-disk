@@ -44,7 +44,7 @@
 +NUMTHREADS 8
 
 ## Output options
-#+OUTGHOST
++OUTGHOST
 #+OUTPHI
 #+OUTDERIV
 

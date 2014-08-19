@@ -35,22 +35,23 @@ int rk45_step_apply(Field *fld, double *t, double *h) {
 	double eps;
 	double tol = fld->Params->tol;
 	
-	printf("%lg %lg \n", *t, *h);
+//	printf("%lg %lg \n", *t, *h);
 	do {
-	
+		f2y(fld,oldy);
 		eps = rk45_step(fld,*t,*h);
-		printf("eps=%.12e \n", eps);
+//		printf("eps=%.12e \n", eps);
 		if (eps > tol) {
 			new_h(h,tol/eps);
-			printf("new h = %lg \n",*h);
+//			printf("new h = %lg \n",*h);
 			y2f(fld,oldy);
 		}
 		if (*h < MIN_STEP) return -1;
 	} while (eps > tol);
 	
-	printf("EXIT LOOP\n");
+//	printf("EXIT LOOP\n");
 	*t += *h;
-	new_h(h,eps/tol);
+	new_h(h,tol/eps);
+//	printf("new h = %lg\n", *h);
 
 	return 1;
 
@@ -58,7 +59,7 @@ int rk45_step_apply(Field *fld, double *t, double *h) {
 
 void new_h(double *h, double eps) {
 	double S = .98;
-	if (eps >= 1)	*h *= S*pow(eps,0.2);
+	if (eps >= 1)	*h *= (2-S)*pow(eps,0.2);
 	else	*h *= S*pow(eps,0.25);
 
 	return;
@@ -66,38 +67,63 @@ void new_h(double *h, double eps) {
 
 
 double rk45_step(Field *fld, double t, double h) {
-	int i,j,m;
+	int i,j,m, indx;
 	int inc = Nx*NC;
 	double eps = 0;
 	int total = 0;
-	f2y(fld,oldy);
 	memcpy(y5,oldy,sizeof(double complex)*Nx*NC*3);
 
-	for(j=0;j<5;j++) {
+	for(j=0;j<6;j++) {
 		func(t+a[j]*h,fld);
 		
 		for(i=0;i<Nx*NC;i++) {
+		
+			indx = i;
+			d[j][indx] = fld->dtu[i]*h;
+			y5[indx] += d[j][indx]*c5[j];
+			eps += cabs((c5[j]-c4[j])*d[j][indx]);
+			total++;
+			if (j<5) {
+				fld->u[i+istart] = oldy[indx];
+				for (m=0;m<=j;m++) {
+					fld->u[i+istart] += b[j+1][m]*d[m][indx];
+				}
+			}
+			else {
+				fld->u[i+istart] = y5[indx];
+			}
+			
+			indx += inc;
+			d[j][indx] = fld->dtv[i]*h;
+			y5[indx] += d[j][indx]*c5[j];
+			eps += cabs((c5[j]-c4[j])*d[j][indx]);
+			total++;
+			if (j<5) {
+				fld->v[i+istart] = oldy[indx];
+				for (m=0;m<=j;m++) {
+					fld->v[i+istart] += b[j+1][m]*d[m][indx];
+				}
+			}
+			else {
+				fld->v[i+istart] = y5[indx];
+			}
+			
+			indx += inc;
+			d[j][indx] = fld->dtsig[i]*h;
+			y5[indx] += d[j][indx]*c5[j];
+			eps += cabs((c5[j]-c4[j])*d[j][indx]);
+			total++;
+			if (j<5) {
+				fld->sig[i+istart] = oldy[indx];
+				for (m=0;m<=j;m++) {
+					fld->sig[i+istart] += b[j+1][m]*d[m][indx];
+				}
+			}	
+			else {
+				fld->sig[i+istart] = y5[indx];
+			}		
+				
 
-			d[j][i] = fld->dtu[i]*h;
-			y5[i] += d[j][i]*c5[j];
-			eps += cabs((c5[j]-c4[j])*d[j][i]);
-			total++;
-			fld->u[i+istart] = oldy[i];
-			for(m=0;m<j;m++) fld->u[i+istart] += b[j+1][m]*d[m][i];
-			
-			d[j][i+inc] = fld->dtv[i]*h;
-			y5[i+inc] += d[j][i+inc]*c5[j];
-			eps += cabs((c5[j]-c4[j])*d[j][i+inc]);
-			total++;
-			fld->v[i+istart] = oldy[i+inc];
-			for(m=0;m<j;m++) fld->v[i+istart] += b[j+1][m]*d[m][i+inc];
-			
-			d[j][i+2*inc] = fld->dtsig[i]*h;
-			y5[i+2*inc] += d[j][i+2*inc]*c5[j];
-			eps += cabs((c5[j]-c4[j])*d[j][i+2*inc]);
-			total++;
-			fld->sig[i+istart] = oldy[i+2*inc];
-			for(m=0;m<j;m++) fld->sig[i+istart] += b[j+1][m]*d[m][i+2*inc];
 	
 		}
 	
@@ -129,7 +155,7 @@ void y2f(Field *fld, double complex *y) {
 void init_rk45(void) {
 	int i;
 	
-	for(i=0;i<6;i++) d[i] = (double complex *)malloc(sizeof(double complex)*Nx*NC);
+	for(i=0;i<6;i++) d[i] = (double complex *)malloc(sizeof(double complex)*Nx*NC*3);
 	
 	
 	y5 = (double complex *)malloc(sizeof(double complex)*Nx*NC*3);
