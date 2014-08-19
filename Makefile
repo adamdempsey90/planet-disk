@@ -35,4 +35,4 @@ $(CHEADER1): $(CINPUT)
 	python $(PY)defines.py 
 	
 clean:
-	rm $(COBJECTS) $(EXECUTABLE)
+	rm $(COBJECTS) $(CHEADER1) $(EXECUTABLE) 

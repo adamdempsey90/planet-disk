@@ -1,10 +1,11 @@
 #include "defines.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_odeiv2.h>
-#include <gsl/gsl_sf_bessel.h>
+// #include <gsl/gsl_errno.h>
+// #include <gsl/gsl_matrix.h>
+// #include <gsl/gsl_odeiv2.h>
+// #include <gsl/gsl_sf_bessel.h>
+#include <float.h>
 #include <math.h>
 #include <string.h>
 #include <complex.h>
@@ -103,8 +104,10 @@ double kmax;
 Derivative deriv; 
 
 
-void func(double t, Field *fld);
+void func(double t, Field *fld, double complex *y, double complex *f);
 int rk45_step_apply(Field *fld, double *t, double *h);
+void fld_2_y(Field *fld, double complex *q);
+void y_2_fld(Field *fld, double complex *q);
 void init_rk45(void);
 void free_rk45(void);
 void fill_rhs(Field *fld, double t);

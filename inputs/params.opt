@@ -33,6 +33,10 @@
 
 #+RESTART
 
+## Time stepping Options
+#+RKF
+#+RKCK
++RKDP
 
 ## Boundary conditions
 
@@ -44,7 +48,7 @@
 +NUMTHREADS 8
 
 ## Output options
-+OUTGHOST
+#+OUTGHOST
 #+OUTPHI
 #+OUTDERIV
 

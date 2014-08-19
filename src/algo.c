@@ -1,7 +1,7 @@
 #include "planetdisk.h"
 
 
-void func(double t, Field *fld) {
+void func(double t, Field *fld, double complex *y, double complex *f) {
 
 	func_calls++;
 //	printf("\t\t # Function calls = %d \n",func_calls);
@@ -9,7 +9,9 @@ void func(double t, Field *fld) {
 
 /*	Get the new u,v,sig */	
 //	printf("Copy Data...\n");
-
+	
+	y_2_fld(fld,y);
+	
 	zero_derivs(fld);
 	set_bc(fld);
 /* Calculate the RHS */	
@@ -17,6 +19,9 @@ void func(double t, Field *fld) {
 
 	fill_rhs(fld,t);
 	
+	memcpy(&f[0],fld->dtu,sizeof(double complex)*Nx*NC);
+	memcpy(&f[Nx*NC],fld->dtv,sizeof(double complex)*Nx*NC);
+	memcpy(&f[2*Nx*NC],fld->dtsig,sizeof(double complex)*Nx*NC);
 //	output_rhs(fld); output_pi(fld);
 /* Copy complex data into real array with u,v,sig all combined for gsl */
 //	printf("Copy Data to GSL...\n");
