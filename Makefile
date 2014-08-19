@@ -1,5 +1,5 @@
 EXECUTABLE=planetdisk
-SOURCES=algo.c fourier.c boundary.c init.c main.c output.c readinputs.c utils.c viscosity.c
+SOURCES=algo.c fourier.c boundary.c init.c main.c output.c readinputs.c utils.c viscosity.c rk45.c
 INPUT=params.opt
 HEADER1=defines.h
 HEADER2=planetdisk.h

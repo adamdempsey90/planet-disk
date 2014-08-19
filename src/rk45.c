@@ -29,39 +29,37 @@ void new_h(double *h, double eps);
 double rk45_step(Field *fld, double t, double h); 
 void f2y(Field *fld, double complex *y);
 void y2f(Field *fld, double complex *y);
-void init_rk45(void);
-void free_rk45(void);
 
-int rk45_apply_step(Field *fld, double *t, double *h) {
+
+int rk45_step_apply(Field *fld, double *t, double *h) {
 	double eps;
 	double tol = fld->Params->tol;
 	
+	printf("%lg %lg \n", *t, *h);
 	do {
 	
 		eps = rk45_step(fld,*t,*h);
-		
+		printf("eps=%.12e \n", eps);
 		if (eps > tol) {
-			new_h(h,eps/tol);
+			new_h(h,tol/eps);
+			printf("new h = %lg \n",*h);
 			y2f(fld,oldy);
 		}
 		if (*h < MIN_STEP) return -1;
 	} while (eps > tol);
 	
-	
+	printf("EXIT LOOP\n");
 	*t += *h;
-	new_h(h,tol/eps);
+	new_h(h,eps/tol);
 
 	return 1;
 
 }
-void func(double t, Field *fld) {
-	return;
-}
 
 void new_h(double *h, double eps) {
-
-	if (eps >= 1)	*h *= pow(eps,0.2);
-	else	*h *= pow(eps,0.25);
+	double S = .98;
+	if (eps >= 1)	*h *= S*pow(eps,0.2);
+	else	*h *= S*pow(eps,0.25);
 
 	return;
 }
@@ -71,7 +69,7 @@ double rk45_step(Field *fld, double t, double h) {
 	int i,j,m;
 	int inc = Nx*NC;
 	double eps = 0;
-	int total = Nx*NC*3;
+	int total = 0;
 	f2y(fld,oldy);
 	memcpy(y5,oldy,sizeof(double complex)*Nx*NC*3);
 
@@ -83,18 +81,21 @@ double rk45_step(Field *fld, double t, double h) {
 			d[j][i] = fld->dtu[i]*h;
 			y5[i] += d[j][i]*c5[j];
 			eps += cabs((c5[j]-c4[j])*d[j][i]);
+			total++;
 			fld->u[i+istart] = oldy[i];
 			for(m=0;m<j;m++) fld->u[i+istart] += b[j+1][m]*d[m][i];
 			
 			d[j][i+inc] = fld->dtv[i]*h;
 			y5[i+inc] += d[j][i+inc]*c5[j];
 			eps += cabs((c5[j]-c4[j])*d[j][i+inc]);
+			total++;
 			fld->v[i+istart] = oldy[i+inc];
 			for(m=0;m<j;m++) fld->v[i+istart] += b[j+1][m]*d[m][i+inc];
 			
 			d[j][i+2*inc] = fld->dtsig[i]*h;
 			y5[i+2*inc] += d[j][i+2*inc]*c5[j];
 			eps += cabs((c5[j]-c4[j])*d[j][i+2*inc]);
+			total++;
 			fld->sig[i+istart] = oldy[i+2*inc];
 			for(m=0;m<j;m++) fld->sig[i+istart] += b[j+1][m]*d[m][i+2*inc];
 	
@@ -102,7 +103,7 @@ double rk45_step(Field *fld, double t, double h) {
 	
 	}
 
-	return eps;
+	return eps/total;
 }
 
 

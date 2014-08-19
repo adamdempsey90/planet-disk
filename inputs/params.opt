@@ -9,7 +9,7 @@
 
 ## Evolve the mean components
 
-+BACKEVOLVE
+#+BACKEVOLVE
 
 ## Operator split on background shear term
 
@@ -31,7 +31,7 @@
 ## Restart files should be placed in the inputs directory 
 ## with the names restart_vx.dat, restart_vy.dat, restart_dens.dat
 
-+RESTART
+#+RESTART
 
 
 ## Boundary conditions

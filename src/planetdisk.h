@@ -6,7 +6,6 @@
 #include <gsl/gsl_odeiv2.h>
 #include <gsl/gsl_sf_bessel.h>
 #include <math.h>
-#include <gsl/gsl_rng.h>
 #include <string.h>
 #include <complex.h>
 #include <sys/stat.h>
@@ -103,11 +102,11 @@ int Nx, Ny, Nmax, outnum, dxoutnum, func_calls, dtoutnum,pioutnum;
 double kmax;
 Derivative deriv; 
 
-//int func (double t, const double y[], double f[],void *params);
 
 void func(double t, Field *fld);
-int rk45_apply_step(Field *fld, double *t, double *h);
-
+int rk45_step_apply(Field *fld, double *t, double *h);
+void init_rk45(void);
+void free_rk45(void);
 void fill_rhs(Field *fld, double t);
 double complex calc_pot(double complex phi,double t, double tau);
 void convolve(double complex *q1, double complex *q2, double complex *res, double complex mult);

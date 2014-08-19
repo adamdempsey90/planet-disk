@@ -2,8 +2,7 @@
 
 int main (void) {
 	int i;
- 	double *y;
-	int gsl_size;
+
 	printf("Welcome to the planet disk code...\n");
 	printf("Code compiled with...\n");
 	output_defines();
@@ -25,7 +24,7 @@ int main (void) {
 	printf("Initializing FFTW...\n");
 
 	init_fft();
-	
+	init_rk45();
 	printf("Initializing Field...\n");
 
 	init(fld);
@@ -41,23 +40,11 @@ int main (void) {
 
 	printf("Defining the ODE System...\n");
 
-	gsl_size = 3*Nx*NR;
 
 //	output_reals(fld);
 
-	y = (double *)malloc(sizeof(double)*gsl_size);
-	global_c2r(y,fld);
-
-	gsl_odeiv2_system sys = {func, NULL, gsl_size, fld};
 
 
-	
-	const gsl_odeiv2_step_type * T = gsl_odeiv2_step_rkf45;
-
-  	gsl_odeiv2_step * s  = gsl_odeiv2_step_alloc (T, gsl_size);
- 	gsl_odeiv2_control * c  = gsl_odeiv2_control_y_new (1e-8, 1e-8);
- 	gsl_odeiv2_evolve * e  = gsl_odeiv2_evolve_alloc (gsl_size);
- 
  
 
   	double	h = .1;
@@ -68,7 +55,7 @@ int main (void) {
   	func_calls = 0;
   
   	printf("Max mode #%d at k=%lg\n",Nmax, kmax);
-  	printf("Effective y resolution of dy = %lg",2*M_PI/kmax);
+  	printf("Effective y resolution of dy = %lg\n\n",2*M_PI/kmax);
 	printf("Starting the Time Loop...\n");
 	printf("\t Starting Time = %lg \t Ending Time = %lg \n",t,t1);
 	
@@ -78,51 +65,36 @@ int main (void) {
       
     dt = t;
 
-    int status = gsl_odeiv2_evolve_apply (e, c, s,
-                                           &sys, 
-                                           &t, t1,
-                                           &h, y);
-     if (status != GSL_SUCCESS) {
+    int status = rk45_step_apply(fld,&t,&h); 
+    
+     if (status == -1) {
      	printf("ERROR With Step...\nTerminating Run...\n");
         break;
     }
     dt = t-dt;
+    
 #ifdef SHEARSPLIT
-	global_r2c(y,fld);
 	shear_advection(fld,dt);
-#ifndef WAVEKILLBC
-	global_c2r(y,fld);
-#endif
 #endif
 	printf ("\t step size = %.5e, at t=%.5e \n", dt, t);
    
 
 #ifdef WAVEKILLBC
-#ifndef SHEARSPLIT
-	global_r2c(y,fld);
-#endif
 	wavekillbc(fld,dt);
-	global_c2r(y,fld);
 #endif
      
       
    	if( t >= fld->Params->t0 + i * (fld->Params->endt) / ((double) fld->Params->numf)) { 
    		 printf ("\t\t OUTPUT %d, step size = %.5e, at t=%.5e \n", outnum,h,t);
-
-		global_r2c(y,fld);
 		
 		output(fld);
       	i++;
      }
     }
 
-  gsl_odeiv2_evolve_free (e);
-  gsl_odeiv2_control_free (c);
-  gsl_odeiv2_step_free (s);
 	
-	
-  free(y); 
   free_field(fld);
   fft_free(); 
+  free_rk45();
   return 0;
 }

@@ -1,17 +1,14 @@
 #include "planetdisk.h"
 
 
-int func (double t, const double y[], double f[],void *params) {
+void func(double t, Field *fld) {
 
 	func_calls++;
 //	printf("\t\t # Function calls = %d \n",func_calls);
 //	printf("Function Called at time = %lg...\n",t);
-	Field *fld = (Field *)params;
 
 /*	Get the new u,v,sig */	
 //	printf("Copy Data...\n");
-
-	global_r2c(y, fld);
 
 	zero_derivs(fld);
 	set_bc(fld);
@@ -27,12 +24,10 @@ int func (double t, const double y[], double f[],void *params) {
 // 	memcpy(&f[0],(double *)fld->dtu,sizeof(double complex)*NTOTC);
 // 	memcpy(&f[NTOTR],(double *)fld->dtv,sizeof(double complex)*NTOTC);
 // 	memcpy(&f[2*NTOTR],(double *)fld->dtsig,sizeof(double complex)*NTOTC);
-
-	global_c2r_dt(f,fld);
 	
 //	printf("Finished Function Call...\n");
 
-	return  GSL_SUCCESS; 
+	return; 
 
 
 }
