@@ -67,7 +67,7 @@ void fill_rhs(Field *fld, double t) {
 #ifndef WAVEEVOLVE 
 			if( k == 0 ) {
 #endif
-
+			if (k < kmax) {
 				phi = calc_pot(fld->phi[i],t,fld->Params->tau);
 				dxphi = calc_pot(fld->dxphi[i],t,fld->Params->tau);
 
@@ -79,7 +79,12 @@ void fill_rhs(Field *fld, double t) {
 				fld->dtv[i-istart] += qom*I*k*(fld->v[i])*(fld->xx[i-istart]);
 				fld->dtsig[i-istart] += qom*I*k*(fld->sig[i])*(fld->xx[i-istart]);
 #endif
-		
+			}
+			else {
+				fld->dtu[i-istart] = 0;
+				fld->dtv[i-istart] = 0;
+				fld->dtsig[i-istart]=0;
+			}
 #ifndef BACKEVOLVE
 			}
 #endif
@@ -129,7 +134,13 @@ void fill_rhs(Field *fld, double t) {
 
 #endif
 
-	
+// 	for(i=0;i<Nx*NC;i++) {
+// 		if (fld->kk[i+istart] >= kmax) {
+// 			fld->dtu[i] = 0;
+// 			fld->dtv[i] = 0;
+// 			fld->dtsig[i] = 0;
+// 		}
+// 	}
 	return;	
 }	
 

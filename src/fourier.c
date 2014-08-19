@@ -16,7 +16,7 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 			mult is a constant multiplication factor 
 */
 
-	int i;
+	int i,j;
 
 /* De-alias with 2/3 truncation rule */	
 #ifdef OPENMP 
@@ -44,8 +44,10 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 	
 /* add output */
 
-	for(i=0;i<NC*Nx;i++) {
-		res[i] += wc3[i];
+	for(i=0;i<Nx;i++) {
+		for(j=0;j<Nmax;j++) {
+			res[CINDX] += wc3[CINDX];
+		}
 	}	
 
 	return;
@@ -91,8 +93,10 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 	
 /* add output */
 	
-	for(i=0;i<Nx*NC;i++) {
-		res[i] += wc3[i];
+	for(i=0;i<Nx;i++) {
+		for(j=0;j<Nmax;j++) {
+			res[CINDX] += wc3[CINDX];
+		}
 	}	
 
 	return;

@@ -67,7 +67,8 @@ int main (void) {
   	i=1;
   	func_calls = 0;
   
-  	printf("max mode #%d at k=%lg\n",Nmax, kmax);
+  	printf("Max mode #%d at k=%lg\n",Nmax, kmax);
+  	printf("Effective y resolution of dy = %lg",2*M_PI/kmax);
 	printf("Starting the Time Loop...\n");
 	printf("\t Starting Time = %lg \t Ending Time = %lg \n",t,t1);
 	
