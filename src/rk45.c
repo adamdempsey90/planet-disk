@@ -5,7 +5,7 @@
 
 #ifdef RKCK
 #define NRK 6
-#define RKORDER 4
+#define RKORDER 5
 static double a[NRK]={0,0.2, .3, .6, 1., .875};
 static double b[NRK][NRK-1] = {
 			{ 0,0,0,0,0},
@@ -21,7 +21,7 @@ static double c4[NRK]={2825./27648,0,18575./48384,13525./55296,277./14366,.25};
 
 #ifdef RKF
 #define NRK 6
-#define RKORDER 4
+#define RKORDER 5
 static double a[NRK]={0,0.25, .375, 12./13, 1., .5};
 static double b[NRK][NRK-1] = {
 			{ 0,0,0,0,0},
@@ -92,10 +92,10 @@ int new_h(double *h, double eps) {
 	
 
 	if (eps>1.1) {
-		r = SAFETY *pow(eps,-1.0/(RKORDER));
+		r = SAFETY*pow(eps,-1.0/(RKORDER));
 		if (r < 0.2) r=0.2;
 		*h *= r;
-	printf("rel_eps = %.12e,  r = %lg,   new h = %.12e\n",eps,r,*h);
+	printf("rel_eps = %lg,  r = %lg,   new h = %.12e\n",eps,r,*h);
 
 		return 1;
 	}
@@ -104,13 +104,13 @@ int new_h(double *h, double eps) {
 		if (r > 5) r=5;
 		if (r < 1) r=1;
 		*h *= r;
-	printf("rel_eps = %.12e,  r = %lg,   new h = %.12e\n",eps,r,*h);
+	printf("rel_eps = %lg,  r = %lg,   new h = %.12e\n",eps,r,*h);
 
 		return 0;
 	}
 	else {
 		r = 1;
-	printf("rel_eps = %.12e,  r = %lg,   new h = %.12e\n",eps,r,*h);
+	printf("rel_eps = %lg,  r = %lg,   new h = %.12e\n",eps,r,*h);
 
 		return 0;
 	}
@@ -118,71 +118,6 @@ int new_h(double *h, double eps) {
 }
 
 
-// double rk45_step(Field *fld, double t, double h) {
-// 	int i,j,m, indx;
-// 	int inc = Nx*NC;
-// 	double eps = 0;
-// 	int total = 0;
-// 	memcpy(y5,oldy,sizeof(double complex)*Nx*NC*3);
-// 
-// 	for(j=0;j<6;j++) {
-// 		func(t+a[j]*h,fld);
-// 		
-// 		for(i=0;i<Nx*NC;i++) {
-// 		
-// 			indx = i;
-// 			d[j][indx] = fld->dtu[i]*h;
-// 			y5[indx] += d[j][indx]*c5[j];
-// 			eps += cabs((c5[j]-c4[j])*d[j][indx]);
-// 			total++;
-// 			if (j<5) {
-// 				fld->u[i+istart] = oldy[indx];
-// 				for (m=0;m<=j;m++) {
-// 					fld->u[i+istart] += b[j+1][m]*d[m][indx];
-// 				}
-// 			}
-// 			else {
-// 				fld->u[i+istart] = y5[indx];
-// 			}
-// 			
-// 			indx += inc;
-// 			d[j][indx] = fld->dtv[i]*h;
-// 			y5[indx] += d[j][indx]*c5[j];
-// 			eps += cabs((c5[j]-c4[j])*d[j][indx]);
-// 			total++;
-// 			if (j<5) {
-// 				fld->v[i+istart] = oldy[indx];
-// 				for (m=0;m<=j;m++) {
-// 					fld->v[i+istart] += b[j+1][m]*d[m][indx];
-// 				}
-// 			}
-// 			else {
-// 				fld->v[i+istart] = y5[indx];
-// 			}
-// 			
-// 			indx += inc;
-// 			d[j][indx] = fld->dtsig[i]*h;
-// 			y5[indx] += d[j][indx]*c5[j];
-// 			eps += cabs((c5[j]-c4[j])*d[j][indx]);
-// 			total++;
-// 			if (j<5) {
-// 				fld->sig[i+istart] = oldy[indx];
-// 				for (m=0;m<=j;m++) {
-// 					fld->sig[i+istart] += b[j+1][m]*d[m][indx];
-// 				}
-// 			}	
-// 			else {
-// 				fld->sig[i+istart] = y5[indx];
-// 			}		
-// 				
-// 
-// 	
-// 		}
-// 	
-// 	}
-// 
-// 	return eps/total;
-// }
 
 double rk45_step(Field *fld, double t, double h) {
 	int i,j,m;
@@ -235,24 +170,6 @@ void y_2_fld(Field *fld, double complex *q) {
 	return;
 }
 
-// void f2y(Field *fld, double complex *y) {
-// 	
-// 	memcpy(&y[0], &(fld->u[istart]),sizeof(double complex)*Nx*NC);
-// 	memcpy(&y[Nx*NC],&(fld->v[istart]),sizeof(double complex)*Nx*NC);
-// 	memcpy(&y[2*Nx*NC],&(fld->sig[istart]),sizeof(double complex)*Nx*NC);
-// 	
-// 	return;
-// 
-// }
-// 
-// void y2f(Field *fld, double complex *y) {
-// 
-// 	memcpy(&(fld->u[istart]),&y[0], sizeof(double complex)*Nx*NC);
-// 	memcpy(&(fld->v[istart]),&y[Nx*NC], sizeof(double complex)*Nx*NC);
-// 	memcpy(&(fld->sig[istart]),&y[2*Nx*NC], sizeof(double complex)*Nx*NC);
-// 	
-// 	return;
-// }
 
 void init_rk45(void) {
 	int i;

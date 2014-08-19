@@ -34,9 +34,9 @@
 #+RESTART
 
 ## Time stepping Options
-#+RKF
++RKF
 #+RKCK
-+RKDP
+#+RKDP
 
 ## Boundary conditions
 

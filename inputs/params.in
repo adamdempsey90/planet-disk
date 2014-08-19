@@ -15,4 +15,4 @@ t0 = 0
 tau = 10
 endt = 10
 numf = 10
-tol = 1e-8
+tol = 1e-6
