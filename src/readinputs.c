@@ -3,7 +3,7 @@
 void read_input(Field *fld) {
 	FILE *f;
 	char garbage[100];
-	double h,Lx,Ly,xs,Mp,nu,q,omega,sig0,t0,tau,endt;
+	double h,Lx,Ly,xs,Mp,nu,q,omega,sig0,t0,tau,endt,tol;
 	int numf;
 	
 	f=fopen("inputs/params.in","r");
@@ -25,7 +25,7 @@ void read_input(Field *fld) {
 	fscanf(f,"tau =  %lg \n",&tau);
 	fscanf(f,"endt =  %lg \n",&endt);
 	fscanf(f,"numf =  %d \n",&numf);
-
+	fscanf(f,"tol =  %lg \n",&tol);
 	fclose(f);
 	
 	fld->Params->Nx = Nx;
@@ -43,7 +43,8 @@ void read_input(Field *fld) {
 	fld->Params->t0 = t0;
 	fld->Params->tau = tau;
 	fld->Params->endt = endt;
-	fld->Params->numf = numf;		
+	fld->Params->numf = numf;
+	fld->Params->tol = tol;			
   	fld->Params->dx = (fld->Params->Lx/Nx);
 
   	printf("Input Parameters \n \
@@ -63,10 +64,11 @@ void read_input(Field *fld) {
   	 \t t0 =  %lg\n \
   	 \t tau =  %lg\n \
   	 \t endt =  %lg\n \
-  	 \t numf =  %d\n", 
+  	 \t numf =  %d\n \
+  	 \t tol = %lg\n", 
   	  fld->Params->Nx, fld->Params->Ny, fld->Params->Lx, fld->Params->Ly, fld->Params->dx, fld->Params->xs, fld->Params->h, 
   	  fld->Params->Mp, fld->Params->nu, fld->Params->q, fld->Params->omega, fld->Params->sig0,
-  	  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf);
+  	  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf,fld->Params->tol);
   
   
   	f = fopen("outputs/params.txt","a");
@@ -87,10 +89,11 @@ void read_input(Field *fld) {
 	t0 =  %lg\n \
 	tau =  %lg\n \
 	endt =  %lg\n \
-	numf =  %d\n", 
+	numf =  %d\n \
+	tol = %lg\n", 
 		  fld->Params->Nx, fld->Params->Ny, fld->Params->Lx, fld->Params->Ly, fld->Params->dx, fld->Params->xs, fld->Params->h, 
 		  fld->Params->Mp, fld->Params->nu, fld->Params->q, fld->Params->omega, fld->Params->sig0,
-		  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf);
+		  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf,fld->Params->tol);
 	fclose(f);
 	return;
 

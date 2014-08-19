@@ -54,7 +54,7 @@ typedef struct Parameters {
 	int Nx, Ny, Nk;
 	double Lx, Ly, dx;
 	double h,c, omega, xs, nu, q, Mp, sig0;
-	double t0, endt, tau;
+	double t0, endt, tau, tol;
 	int numf;
 	char restartfname[50];
 	
