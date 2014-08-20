@@ -4,3 +4,4 @@
 *.out
 *.dat
 *.bin
+*.pyc

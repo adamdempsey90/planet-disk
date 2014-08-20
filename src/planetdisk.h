@@ -104,7 +104,7 @@ double kmax;
 Derivative deriv; 
 
 
-void func(double t, Field *fld, double complex *y, double complex *f);
+void func(double t, double complex *y, double complex *f,Field *fld);
 int rk45_step_apply(Field *fld, double *t, double *h);
 void fld_2_y(Field *fld, double complex *q);
 void y_2_fld(Field *fld, double complex *q);

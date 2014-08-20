@@ -34,13 +34,14 @@
 #+RESTART
 
 ## Time stepping Options
-+RKF
+#+RKF
 #+RKCK
-#+RKDP
++RKDP
 
 ## Boundary conditions
 
 #+WAVEKILLBC
+
 
 ## OpenMP parallization Specify # of threads  if OPENMP is flagged
 
@@ -51,6 +52,7 @@
 #+OUTGHOST
 #+OUTPHI
 #+OUTDERIV
+
 
 
 

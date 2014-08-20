@@ -1,8 +1,7 @@
 EXECUTABLE=planetdisk
-SOURCES=algo.c fourier.c boundary.c init.c main.c output.c readinputs.c utils.c viscosity.c rk45.c
-INPUT=params.opt
-HEADER1=defines.h
-HEADER2=planetdisk.h
+SOURCES=algo.c fourier.c boundary.c init.c main.c output.c readinputs.c utils.c viscosity.c rk45.c rk45_step.c
+HEADER=planetdisk.h defines.h rk45.h
+
 LDFLAGS=-lgsl -lgslcblas -lgomp  -lfftw3 -lm 
 
 CFLAGS=-c -Wall -O3 -fopenmp -Iinc
@@ -18,9 +17,9 @@ CC=gcc
 OBJECTS=$(SOURCES:.c=.o)
 CSOURCES=$(addprefix $(SRC),$(SOURCES))
 COBJECTS=$(addprefix $(BIN),$(OBJECTS))
-CINPUT=$(addprefix $(IN),$(INPUT))
-CHEADER1=$(addprefix $(SRC),$(HEADER1))
-CHEADER2=$(addprefix $(SRC),$(HEADER2))
+CHEADER=$(addprefix $(SRC),$(HEADER))
+
+
 
 
 all: $(CSOURCES) $(EXECUTABLE) 
@@ -28,11 +27,9 @@ all: $(CSOURCES) $(EXECUTABLE)
 $(EXECUTABLE): $(COBJECTS) 
 	$(CC)  $(COBJECTS) $(LDFLAGS) -o $@
 
-$(BIN)%.o: $(SRC)%.c $(CHEADER1) $(CHEADER2)
+$(BIN)%.o: $(SRC)%.c $(CHEADER) 
 	$(CC) $(CFLAGS) $< -o $@
 
-$(CHEADER1): $(CINPUT)
-	python $(PY)defines.py 
 	
 clean:
-	rm $(COBJECTS) $(CHEADER1) $(EXECUTABLE) 
+	rm $(COBJECTS) $(EXECUTABLE) 

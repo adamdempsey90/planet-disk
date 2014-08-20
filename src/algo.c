@@ -1,7 +1,7 @@
 #include "planetdisk.h"
 
 
-void func(double t, Field *fld, double complex *y, double complex *f) {
+void func(double t, double complex *y, double complex *f,Field *fld) {
 
 	func_calls++;
 //	printf("\t\t # Function calls = %d \n",func_calls);
