@@ -34,9 +34,9 @@ int new_h(double complex *yerr, double *h, double tol) {
 	double r;
 	double eps= DBL_MIN;
 
-// #ifdef OPENMP
-// #pragma omp parallel for private(i) shared(yerr) num_threads(NUMTHREADS) schedule(static) reduction(max:eps) 
-// #endif		
+#ifdef OPENMP
+#pragma omp parallel for private(i) shared(yerr) num_threads(NUMTHREADS) schedule(static) reduction(max:eps) 
+#endif		
 	for(i=0;i<rk_size;i++) {
 		eps	= fmax(eps,fabs(yerr[i]));
 	}
