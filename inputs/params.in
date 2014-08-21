@@ -1,6 +1,6 @@
 # Input Parameters
 Nx = 2048
-Ny = 512
+Ny = 32
 Lx = 60.0
 Ly = 30.0
 xsoft = .6
@@ -13,6 +13,6 @@ sig0 = 1.0
 # Time Parameters
 t0 = 0
 tau = 10
-endt = 1
-numf = 1
+endt = 10
+numf = 10
 tol = 1e-8

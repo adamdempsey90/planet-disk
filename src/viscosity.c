@@ -15,33 +15,28 @@ void visc_tens(Field *fld) {
 	#pragma omp parallel private(i,divv) shared(fld) num_threads(NUMTHREADS)
 	#pragma omp for schedule(static)
 #endif	
-	for(i=0;i<NTOTC;i++) {
-		if (i<istart || i>=iend) {
-			fld->Tens->Pixx[i] = -c*(fld->sig[i]);
-			fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
-			fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
-		}
-		else {
-			
-			divv = fld->dxu[i] + fld->dyv[i];
-			divv *= twoth;
-			fld->Tens->Txx[i] = 2*(fld->dxu[i])-divv;
-			fld->Tens->Txy[i] = fld->dxv[i] + fld->dyu[i];
-			fld->Tens->Tyy[i] = 2*(fld->dyv[i]) - divv;
-			fld->Tens->Pixx[i] = -c*(fld->sig[i]);
-			fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
-			fld->Tens->Piyy[i] = -c*(fld->sig[i]);		
-			fld->Tens->divPix[i] = 0;
-			fld->Tens->divPiy[i] = 0;
-		}
+	for(i=istart;i<iend;i++) {
+	
+		divv = fld->dxu[i] + fld->dyv[i];
+		divv *= twoth;
+		fld->Tens->Txx[i] = 2*(fld->dxu[i])-divv;
+		fld->Tens->Txy[i] = fld->dxv[i] + fld->dyu[i];
+		fld->Tens->Tyy[i] = 2*(fld->dyv[i]) - divv;
+		fld->Tens->Pixx[i] = -c*(fld->sig[i]);
+		fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
+		fld->Tens->Piyy[i] = -c*(fld->sig[i]);		
+		fld->Tens->divPix[i] = 0;
+		fld->Tens->divPiy[i] = 0;
+		
 	}
+
 	convolve(&fld->Tens->Txx[istart],&fld->sig[istart],&fld->Tens->Pixx[istart],nu);
 	convolve(&fld->Tens->Txy[istart],&fld->sig[istart],&fld->Tens->Pixy[istart],nu);
 	convolve(&fld->Tens->Tyy[istart],&fld->sig[istart],&fld->Tens->Piyy[istart],nu);
 
 /* Set Tensor B.C's */
 
-
+	set_pi_bc(fld);
 
 	return;
 }

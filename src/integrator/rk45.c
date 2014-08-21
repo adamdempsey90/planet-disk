@@ -13,8 +13,9 @@ int rk45_step_apply(Field *fld, double *t, double *h) {
 		memcpy(y,oldy,sizeof(double complex)*rk_size);
 		oldh = *h;
 		rk45_step(y, yerr, f, *t, *h, fld);
+		
 		status = new_h(yerr,h,tol);
-
+	
 		if (*h < MIN_STEP) return -1;
 		
 	} while (status != 0);
@@ -32,14 +33,17 @@ int rk45_step_apply(Field *fld, double *t, double *h) {
 int new_h(double complex *yerr, double *h, double tol) {
 	int i;
 	double r;
-	double eps= DBL_MIN;
-
+	double peps= DBL_MIN;
+	double eps;
 #ifdef OPENMP
 #pragma omp parallel for private(i) shared(yerr) num_threads(NUMTHREADS) schedule(static) reduction(max:eps) 
 #endif		
 	for(i=0;i<rk_size;i++) {
-		eps	= fmax(eps,fabs(yerr[i]));
+		peps = fmax(peps,fabs(yerr[i]));
 	}
+
+	MPI_Allreduce(&peps,&eps,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD);
+	
 	eps /= tol;
 	if (eps>1.1) {
 		r = SAFETY*pow(eps,-1.0/(rk_order));

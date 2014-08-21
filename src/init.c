@@ -2,19 +2,24 @@
 
 void init(Field *fld) {
 	int i,j;
+
 	double Lx = fld->Params->Lx;
 	double Ly = fld->Params->Ly;
 	
-	printf("\t Initializing Coordinates...\n");
-	for(i=0;i<(Nx+2*NG);i++) fld->x[i] = -.5*Lx+(i-NG+.5)*(Lx/Nx);
+	MPI_Printf("\t Initializing Coordinates...\n");
+
+	for(i=0;i<(Nx+2*NG);i++) {
+		fld->x[i] = -.5*Lx+(i+rank*Nxproc[0]-NG+.5)*(fld->Params->dx);
+	}
+
 	for(i=0;i<Ny;i++) fld->y[i] = -.5*Ly + (i+.5)*(Ly/Ny);
-	printf("\t Initializing Boundary Conditions...\n");
+	
 	for(i=0;i<NC;i++) {
 		fld->k[i]= i*(M_PI*2/Ly);
 	}
-	printf("\t Initializing Gravitational Potential...\n");
+	MPI_Printf("\t Initializing Gravitational Potential...\n");
 	initphi(fld);
-
+	MPI_Printf("\t Setting Initial Conditions\n");
 /* Set initial conditions here */
 #ifdef OPENMP 
 	#pragma omp parallel private(i,j) shared(fld) num_threads(NUMTHREADS)
@@ -47,8 +52,8 @@ void init(Field *fld) {
 
 			fld->Tens->divPix[CINDX] = 0;
 			fld->Tens->divPiy[CINDX] = 0;
-
 		}
+	 
 	}
 	for(i=0;i<istart;i++) {
 		fld->dxu[i] = 0;
@@ -269,6 +274,7 @@ void free_field(Field *fld) {
 
 
 void initphi(Field *fld) {
+
 	int i,j;
 	double rad, xs;
 	double *rphi = (double *)malloc(sizeof(double)*Nx*NR);
@@ -296,6 +302,7 @@ void initphi(Field *fld) {
 	fft_phi(rphi,fld->phi);
 	fft_phi(rdxphi,fld->dxphi);
 
+	
 
 	free(rphi); free(rdxphi);
 	return;

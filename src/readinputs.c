@@ -48,7 +48,7 @@ void read_input(Field *fld) {
 	fld->Params->tol = tol;		
   	fld->Params->dx = (fld->Params->Lx/Nx);
 
-  	printf("Input Parameters \n \
+  	MPI_Printf("Input Parameters \n \
   	 \t Nx = %d\n \
   	 \t Ny = %d\n \
   	 \t Lx = %lg\n \
@@ -71,31 +71,43 @@ void read_input(Field *fld) {
   	  fld->Params->Mp, fld->Params->nu, fld->Params->q, fld->Params->omega, fld->Params->sig0,
   	  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf,fld->Params->tol);
   
-  
-  	f = fopen("outputs/params.txt","a");
-	fprintf(f,"Input Parameters: \n \
-	Nx = %d\n \
-	Ny = %d\n \
-	Lx = %lg\n \
-	Ly =  %lg\n \
-	dx = %lg\n \
-	xsoft =  %lg\n \
-	h =  %lg\n \
-	Mp =  %lg\n \
-	nu =  %lg\n \
-	q =  %lg\n \
-	omega =  %lg\n \
-	sig0 = %lg\n \
-	Time Parameters \n \
-	t0 =  %lg\n \
-	tau =  %lg\n \
-	endt =  %lg\n \
-	numf =  %d\n \
-  	tol =  %lg\n", 
-		  fld->Params->Nx, fld->Params->Ny, fld->Params->Lx, fld->Params->Ly, fld->Params->dx, fld->Params->xs, fld->Params->h, 
-		  fld->Params->Mp, fld->Params->nu, fld->Params->q, fld->Params->omega, fld->Params->sig0,
-		  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf,fld->Params->tol);
-	fclose(f);
+  	if (rank==0) {
+		f = fopen("outputs/params.txt","a");
+		fprintf(f,"Input Parameters: \n \
+		Nx = %d\n \
+		Ny = %d\n \
+		Lx = %lg\n \
+		Ly =  %lg\n \
+		dx = %lg\n \
+		xsoft =  %lg\n \
+		h =  %lg\n \
+		Mp =  %lg\n \
+		nu =  %lg\n \
+		q =  %lg\n \
+		omega =  %lg\n \
+		sig0 = %lg\n \
+		Time Parameters \n \
+		t0 =  %lg\n \
+		tau =  %lg\n \
+		endt =  %lg\n \
+		numf =  %d\n \
+		tol =  %lg\n", 
+			  fld->Params->Nx, fld->Params->Ny, fld->Params->Lx, fld->Params->Ly, fld->Params->dx, fld->Params->xs, fld->Params->h, 
+			  fld->Params->Mp, fld->Params->nu, fld->Params->q, fld->Params->omega, fld->Params->sig0,
+			  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf,fld->Params->tol);
+		fclose(f);
+	}
+	
+	
+/* Send out data to rest of processors */
+	
+	int i;
+	if (rank==0) {	
+		for(i=0;i<np;i++) Nxproc[i] = Nx/np;
+		Nxproc[np-1] += Nx % np;
+	}
+	
+	
 	return;
 
 

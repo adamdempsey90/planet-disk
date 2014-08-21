@@ -113,7 +113,6 @@ void init_fft(void) {
 	int *inembed=NULL, *onembed=NULL;
 
 	Nmax = floor(2./3*NC);
-
 	
 	wc1 = (double complex *)malloc(sizeof(double complex)*Nx*NC);
 	wr1 = (double *)wc1;
@@ -148,13 +147,22 @@ void init_fft(void) {
 // 	if (r2c3 == NULL) printf("Problem with r2c3\n");
 // 	
 	c2r2=fftw_plan_many_dft_c2r(1,n,howmany,wc2, inembed, istride, idist, wr2, onembed, ostride, odist,FFTW_ESTIMATE);
+	if (c2r2 == NULL) printf("Problem with c2r1 on processor %d\n",rank);
 	r2c2=fftw_plan_many_dft_r2c(1,n,howmany,wr2, onembed, ostride, odist, wc2, inembed, istride, idist,FFTW_ESTIMATE);
+	if (r2c2 == NULL) printf("Problem with c2r1 on processor %d\n",rank);
 
 	c2r1=fftw_plan_many_dft_c2r(1,n,howmany,wc1, inembed, istride, idist, wr1, onembed, ostride, odist,FFTW_ESTIMATE);
+	if (c2r1 == NULL) printf("Problem with c2r1 on processor %d\n",rank);
+
 	r2c1=fftw_plan_many_dft_r2c(1,n,howmany,wr1, onembed, ostride, odist, wc1, inembed, istride, idist,FFTW_ESTIMATE);
+	if (r2c1 == NULL) printf("Problem with c2r1 on processor %d\n",rank);
+
 
 	c2r3=fftw_plan_many_dft_c2r(1,n,howmany,wc3, inembed, istride, idist, wr3, onembed, ostride, odist,FFTW_ESTIMATE);
+	if (c2r3 == NULL) printf("Problem with c2r1 on processor %d\n",rank);
+	
 	r2c3=fftw_plan_many_dft_r2c(1,n,howmany,wr3, onembed, ostride, odist, wc3, inembed, istride, idist,FFTW_ESTIMATE);
+	if (r2c3 == NULL) printf("Problem with c2r1 on processor %d\n",rank);
 
 	return;
 

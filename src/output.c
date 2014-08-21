@@ -2,14 +2,17 @@
 
 /* Option to write output in real space or complex space */
 
+void write_header(FILE *f);
+void write_cheader(FILE *f);
+
 void output(Field *fld) {
 	FILE *fu, *fv, *fs;
 	char fnameu[50], fnamev[50], fnames[50];
 
 
-	sprintf(fnameu,"outputs/vx_%d.dat",outnum);
-	sprintf(fnamev,"outputs/vy_%d.dat",outnum);
-	sprintf(fnames,"outputs/dens_%d.dat",outnum);
+	sprintf(fnameu,"outputs/id%d/vx_%d.dat",rank,outnum);
+	sprintf(fnamev,"outputs/id%d/vy_%d.dat",rank,outnum);
+	sprintf(fnames,"outputs/id%d/dens_%d.dat",rank,outnum);
 
 
 	fu = fopen(fnameu,"wb");
@@ -20,7 +23,7 @@ void output(Field *fld) {
 	if (fs == NULL) printf("ERROR: Couldn't open dens file\n");
 
 
-
+	write_cheader(fu); write_cheader(fv); write_cheader(fs);
 #ifdef OUTGHOST
 	fwrite((double *)fld->u,sizeof(double),NTOTR,fu);
 	fwrite((double *)fld->v,sizeof(double),NTOTR,fv);
@@ -42,11 +45,15 @@ void output(Field *fld) {
 
 void output_coords(Field *fld) {
 	FILE *f;
-	f = fopen("outputs/coords.dat","wb");
+	char fname[50];
+	sprintf(fname,"outputs/id%d/coords.dat",rank);
+	f = fopen(fname,"wb");
+	write_header(f);
 #ifdef OUTGHOST
 	fwrite(fld->x,sizeof(double),Nx+2*NG,f);
 
 #else
+	
 	fwrite(&fld->x[NG],sizeof(double),Nx,f);
 #endif
 	fwrite(fld->k,sizeof(double),NC,f);
@@ -59,9 +66,9 @@ void output_derivs(Field *fld) {
 	FILE *fu, *fv, *fs;
 	char fnameu[50], fnamev[50], fnames[50];
 	
-	sprintf(fnameu,"outputs/dxvx_%d.dat",dxoutnum);
-	sprintf(fnamev,"outputs/dxvy_%d.dat",dxoutnum);
-	sprintf(fnames,"outputs/dxdens_%d.dat",dxoutnum);
+	sprintf(fnameu,"outputs/id%d/dxvx_%d.dat",rank,dxoutnum);
+	sprintf(fnamev,"outputs/id%d/dxvy_%d.dat",rank,dxoutnum);
+	sprintf(fnames,"outputs/id%d/dxdens_%d.dat",rank,dxoutnum);
 
 	fu = fopen(fnameu,"wb");
 	if (fu == NULL) printf("ERROR: Couldn't open dxvx file\n");
@@ -89,9 +96,9 @@ void output_rhs(Field *fld) {
 	char fnameu[50], fnamev[50], fnames[50];
 
 
-	sprintf(fnameu,"outputs/dtvx_%d.dat",dtoutnum);
-	sprintf(fnamev,"outputs/dtvy_%d.dat",dtoutnum);
-	sprintf(fnames,"outputs/dtdens_%d.dat",dtoutnum);
+	sprintf(fnameu,"outputs/id%d/dtvx_%d.dat",rank,dtoutnum);
+	sprintf(fnamev,"outputs/id%d/dtvy_%d.dat",rank,dtoutnum);
+	sprintf(fnames,"outputs/id%d/dtdens_%d.dat",rank,dtoutnum);
 
 	fu = fopen(fnameu,"wb");
 	if (fu == NULL) printf("ERROR: Couldn't open dtvx file\n");
@@ -114,11 +121,11 @@ void output_pi(Field *fld) {
 	char fnamexx[50], fnameyy[50], fnamexy[50], fnamedx[50], fnamedy[50];
 
 
-	sprintf(fnamexx,"outputs/pixx_%d.dat",pioutnum);
-	sprintf(fnamexy,"outputs/pixy_%d.dat",pioutnum);
-	sprintf(fnameyy,"outputs/piyy_%d.dat",pioutnum);
-	sprintf(fnamedy,"outputs/divpix_%d.dat",pioutnum);
-	sprintf(fnamedx,"outputs/divpiy_%d.dat",pioutnum);
+	sprintf(fnamexx,"outputs/id%d/pixx_%d.dat",rank,pioutnum);
+	sprintf(fnamexy,"outputs/id%d/pixy_%d.dat",rank,pioutnum);
+	sprintf(fnameyy,"outputs/id%d/piyy_%d.dat",rank,pioutnum);
+	sprintf(fnamedy,"outputs/id%d/divpix_%d.dat",rank,pioutnum);
+	sprintf(fnamedx,"outputs/id%d/divpiy_%d.dat",rank,pioutnum);
 	
 	fxx = fopen(fnamexx,"wb");
 	if (fxx == NULL) printf("ERROR: Couldn't open pixx file\n");
@@ -154,9 +161,9 @@ void output_reals(Field *fld) {
 	char fnameu[50], fnamev[50], fnames[50];
 	
 	transform(fld);
-	sprintf(fnameu,"outputs/rvx_%d.dat",dxoutnum);
-	sprintf(fnamev,"outputs/rvy_%d.dat",dxoutnum);
-	sprintf(fnames,"outputs/rdens_%d.dat",dxoutnum);
+	sprintf(fnameu,"outputs/id%d/rvx_%d.dat",rank,dxoutnum);
+	sprintf(fnamev,"outputs/id%d/rvy_%d.dat",rank,dxoutnum);
+	sprintf(fnames,"outputs/id%d/rdens_%d.dat",rank,dxoutnum);
 
 	fu = fopen(fnameu,"wb");
 	if (fu == NULL) printf("ERROR: Couldn't open dxvx file\n");
@@ -165,7 +172,7 @@ void output_reals(Field *fld) {
 	fs = fopen(fnames,"wb");
 	if (fs == NULL) printf("ERROR: Couldn't open dxdens file\n");
 
-
+	write_header(fu); write_header(fv); write_header(fs);
 	fwrite(fld->vx,sizeof(double),Nx*NR,fu);
 	fwrite(fld->vy,sizeof(double),Nx*NR,fv);
 	fwrite(fld->dens,sizeof(double),Nx*NR,fs);
@@ -176,7 +183,7 @@ void output_reals(Field *fld) {
 }
 
 void output_defines(void) {
-	FILE *f = fopen("outputs/params.txt","w");
+	FILE *f = fopen("outputs/id0/params.txt","w");
 	fprintf(f,"Configuration parameters:\n");
 #ifdef RESTART
 	printf("\t Restarting from file\n");
@@ -210,5 +217,37 @@ void output_defines(void) {
 	fprintf(f,"\tOutputting the ghost zones\n");
 #endif
 	fclose(f);
+	return;
+}
+void write_header(FILE *f) {
+
+#ifdef OUTGHOST
+	double dNx = (double)(Nx+2*NG);
+#else
+	double dNx = (double)Nx;
+#endif
+	double dNy = (double)Ny;
+	fwrite(&dNx,sizeof(double),1,f);
+	fwrite(&dNy,sizeof(double),1,f);
+
+	return;
+}
+void write_cheader(FILE *f) {
+
+#ifdef OUTGHOST
+	double complex dNx = (double complex)(Nx+2*NG);
+#else
+	double complex dNx = (double complex)Nx;
+#endif
+	double complex dNy = (double complex)Ny;
+	fwrite((double *)&dNx,sizeof(double complex),1,f);
+	fwrite((double *)&dNy,sizeof(double complex),1,f);
+
+	return;
+}
+void init_output(void) {
+	char dir[50];
+	sprintf(dir,"outputs/id%d/",rank);
+	mkdir(dir,0777);
 	return;
 }

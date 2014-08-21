@@ -1,15 +1,12 @@
 #include "defines.h"
 #include <stdio.h>
 #include <stdlib.h>
-// #include <gsl/gsl_errno.h>
-// #include <gsl/gsl_matrix.h>
-// #include <gsl/gsl_odeiv2.h>
-// #include <gsl/gsl_sf_bessel.h>
 #include <float.h>
 #include <math.h>
 #include <string.h>
 #include <complex.h>
 #include <sys/stat.h>
+#include <mpi.h>
 
 
 
@@ -47,7 +44,7 @@
 #define CINDX j+i*NC
 #define RINDX j+i*NR
 
-
+#define	MPI_Printf	if (rank==0) printf
 
 typedef struct Parameters {
 	
@@ -100,6 +97,8 @@ typedef struct Derivative {
 } Derivative;
 		
 int Nx, Ny, Nmax, outnum, dxoutnum, func_calls, dtoutnum,pioutnum;
+int *Nxproc;
+int np,rank;
 double kmax;
 Derivative deriv; 
 
@@ -143,3 +142,7 @@ void wavekillbc(Field *fld,double dt);
 void output_defines(void);
 void restart(Field *fld);
 void shear_advection(Field *fld,double dt);
+void init_buff(void);
+void free_buff(void);
+void init_output(void);
+void set_pi_bc(Field *fld);

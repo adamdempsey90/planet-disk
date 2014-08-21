@@ -1,24 +1,68 @@
 
 class Field():
-	def __init__(self,time,Nx,Ny,NG=0,dir=''):
-		NC = Ny/2+1
-		self.Nx = Nx
-		self.Ny = Ny
-		self.NC = NC
-		self.NR = 2*NC
-		self.NG = NG
-		self.sig=fromfile(dir+'dens_'+str(time)+'.dat',dtype='complex').reshape((Nx+2*NG,NC))
-		self.u=fromfile(dir+'vx_'+str(time)+'.dat',dtype='complex').reshape((Nx+2*NG,NC))
-		self.v=fromfile(dir+'vy_'+str(time)+'.dat',dtype='complex').reshape((Nx+2*NG,NC))
-		coords=fromfile(dir+'coords.dat');
-		self.x=coords[:Nx+2*NG]
-		self.k=coords[Nx+2*NG:Nx+2*NG+NC]
-		self.y=coords[Nx+2*NG+NC:]
+	def __init__(self,time,np,dir=''):
+		vx,vy,dens,x,self.k,self.y,Nx,NC,splits = loadvars(np,time);
+		self.Nx = Nx.sum()
+		self.NC = NC.sum()
+		self.Ny = 2*self.NC-2
+		self.NR= 2*self.NC
+		
+		self.u = vx[0]
+		self.v = vy[0]
+		self.sig = dens[0]
+		self.x = x[0]
+
+		for i in range(1,np):
+			self.u = vstack((self.u,vx[i]))
+			self.v = vstack((self.v,vy[i]))
+			self.sig = vstack((self.sig,dens[i]))
+			self.x = hstack((self.x,x[i]))
+
 		self.dx = diff(self.x)[0]
 		self.Lx = self.Nx*self.dx
 		self.Ly = 2*self.Ny*self.y[0]/(1-self.Ny)
-	
+		self.splits = self.x[splits]
 		
+def loadvars(np,time):
+	vx = []
+	vy = []
+	dens = []
+	x = []
+	y = []
+	k = []
+	
+	Nx = arange(np)
+	NC = arange(np)
+
+	for i in range(np):
+		temp = fromfile('id'+str(i)+'/vx_'+str(time)+'.dat',dtype='complex')
+				
+
+		Nx[i] = int(real(temp[0]))
+		NC[i] = int(real(temp[1]))/2+1
+		vx.append(temp[2:].reshape((Nx[i],NC[i])))
+		
+		temp = fromfile('id'+str(i)+'/vy_'+str(time)+'.dat',dtype='complex')
+		vy.append(temp[2:].reshape((Nx[i],NC[i])))
+		temp = fromfile('id'+str(i)+'/dens_'+str(time)+'.dat',dtype='complex')
+		dens.append(temp[2:].reshape((Nx[i],NC[i])))
+		
+		temp = fromfile('id'+str(i)+'/coords.dat')
+		temp=temp[2:]
+		x.append(temp[:Nx[i]])
+		if i==0:
+			k=temp[Nx[i]:Nx[i]+NC[i]]
+			y=temp[Nx[i]+NC[i]:]
+	
+	splits=[]
+	for i in range(1,np):
+		temp = 0
+		for j in range(i):
+			temp += Nx[j]
+		splits.append(temp)
+	
+	return vx,vy,dens,x,k,y,Nx,Ny,splits
+			
 def realspace(fld):
 #	x=hstack((-fld.x[::-1],fld.x))
 #	y=fld.y
