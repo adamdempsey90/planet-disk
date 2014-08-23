@@ -13,6 +13,6 @@ sig0 = 1.0
 # Time Parameters
 t0 = 0
 tau = 10
-endt = 10
-numf = 10
+endt = 100
+numf = 100
 tol = 1e-8

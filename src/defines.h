@@ -1,2 +1,3 @@
 #define WAVEEVOLVE
-#define TENTHDERIV
+#define BACKEVOLVE
+#define SECDERIV

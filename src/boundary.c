@@ -83,27 +83,34 @@ void set_bc(Field *fld) {
    		and receive their left b.c from proc rank-1
 */
 
-		memcpy(&rbuff[0],(double *)&(fld->u[iend-NC*NG]),sizeof(double complex)*NC*NG);
-		memcpy(&rbuff[NG*NR],(double *)&(fld->v[iend-NC*NG]),sizeof(double complex)*NC*NG);
-		memcpy(&rbuff[2*NG*NR],(double *)&(fld->sig[iend-NC*NG]),sizeof(double complex)*NC*NG);	
-		
-		MPI_Sendrecv(rbuff,3*NR*NG,MPI_DOUBLE,rank+1,rank,
-						lbuff,3*NR*NG,MPI_DOUBLE,rank-1,rank-1,MPI_COMM_WORLD,&status);
-
-		memcpy(&(fld->u[0]), (double complex *)&lbuff[0],sizeof(double complex)*NC*NG);
-		memcpy(&(fld->v[0]),(double complex *)&lbuff[NG*NR],sizeof(double complex)*NC*NG);
-		memcpy(&(fld->sig[0]),(double complex *)&lbuff[2*NG*NR],sizeof(double complex)*NC*NG);			
-		
+/* 		Left BC 		*/
 		memcpy(&lbuff[0],(double *)&(fld->u[istart]),sizeof(double complex)*NC*NG);
 		memcpy(&lbuff[NG*NR],(double *)&(fld->v[istart]),sizeof(double complex)*NC*NG);
 		memcpy(&lbuff[2*NG*NR],(double *)&(fld->sig[istart]),sizeof(double complex)*NC*NG);
 		
-		MPI_Sendrecv(lbuff,3*NR*NG,MPI_DOUBLE,rank-1,rank,
-						rbuff,3*NR*NG,MPI_DOUBLE,rank+1,rank+1,MPI_COMM_WORLD,&status);
+		MPI_Sendrecv_replace(lbuff,3*NR*NG,MPI_DOUBLE,rank-1,rank,
+					 rank-1,rank-1,MPI_COMM_WORLD,&status);
 
-		memcpy(&(fld->u[iend]), (double complex *)&rbuff[0],sizeof(double complex)*NC*NG);
-		memcpy(&(fld->v[iend]),(double complex *)&rbuff[NG*NR],sizeof(double complex)*NC*NG);
-		memcpy(&(fld->sig[iend]),(double complex *)&rbuff[2*NG*NR],sizeof(double complex)*NC*NG);		
+
+		memcpy((double *)&(fld->u[0]), &lbuff[0],sizeof(double complex)*NC*NG);
+		memcpy((double *)&(fld->v[0]),&lbuff[NG*NR],sizeof(double complex)*NC*NG);
+		memcpy((double *)&(fld->sig[0]),&lbuff[2*NG*NR],sizeof(double complex)*NC*NG);		
+
+
+/*		Right BC		*/
+		memcpy(&rbuff[0],(double *)&(fld->u[iend-NC*NG]),sizeof(double complex)*NC*NG);
+		memcpy(&rbuff[NG*NR],(double *)&(fld->v[iend-NC*NG]),sizeof(double complex)*NC*NG);
+		memcpy(&rbuff[2*NG*NR],(double *)&(fld->sig[iend-NC*NG]),sizeof(double complex)*NC*NG);	
+		
+		MPI_Sendrecv_replace(rbuff,3*NR*NG,MPI_DOUBLE,rank+1,rank,
+						rank+1,rank+1,MPI_COMM_WORLD,&status);
+						
+		memcpy((double *)&(fld->u[iend]), &rbuff[0],sizeof(double complex)*NC*NG);
+		memcpy((double *)&(fld->v[iend]),&rbuff[NG*NR],sizeof(double complex)*NC*NG);
+		memcpy((double *)&(fld->sig[iend]),&rbuff[2*NG*NR],sizeof(double complex)*NC*NG);					
+						
+
+			
 	}
 	}	
 	}
@@ -167,7 +174,8 @@ void set_pi_bc(Field *fld) {
 			fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
 		}
 	}
-	else if (rank==np-1) {
+	else {
+	if (rank==np-1) {
 /* Proc np-1 receives its left b.c from proc np-2 */
 		memcpy(&lbuff[0],(double *)&(fld->Tens->Pixx[istart]),sizeof(double complex)*NC*NG);
 		memcpy(&lbuff[NG*NR],(double *)&(fld->Tens->Pixy[istart]),sizeof(double complex)*NC*NG);
@@ -195,29 +203,36 @@ void set_pi_bc(Field *fld) {
    They also send their left b.c to proc rank-1 
    		and receive their left b.c from proc rank-1
 */
-		memcpy(&rbuff[0],(double *)&(fld->Tens->Pixx[iend-NC*NG]),sizeof(double complex)*NC*NG);
-		memcpy(&rbuff[NG*NR],(double *)&(fld->Tens->Pixy[iend-NC*NG]),sizeof(double complex)*NC*NG);
-		memcpy(&rbuff[2*NG*NR],(double *)&(fld->Tens->Piyy[iend-NC*NG]),sizeof(double complex)*NC*NG);	
-		
-//		printf("%d sending rbc to %d\n",rank,rank+1);	
-		MPI_Sendrecv(rbuff,3*NR*NG,MPI_DOUBLE,rank+1,rank,
-						lbuff,3*NR*NG,MPI_DOUBLE,rank-1,rank-1,MPI_COMM_WORLD,&status);
-//		printf("%d received lbc from %d\n",rank,rank-1);	
-		memcpy(&(fld->Tens->Pixx[0]), (double complex *)&lbuff[0],sizeof(double complex)*NC*NG);
-		memcpy(&(fld->Tens->Pixy[0]),(double complex *)&lbuff[NG*NR],sizeof(double complex)*NC*NG);
-		memcpy(&(fld->Tens->Piyy[0]),(double complex *)&lbuff[2*NG*NR],sizeof(double complex)*NC*NG);			
-		
+
+
+/* 		Left BC 		*/
 		memcpy(&lbuff[0],(double *)&(fld->Tens->Pixx[istart]),sizeof(double complex)*NC*NG);
 		memcpy(&lbuff[NG*NR],(double *)&(fld->Tens->Pixy[istart]),sizeof(double complex)*NC*NG);
 		memcpy(&lbuff[2*NG*NR],(double *)&(fld->Tens->Piyy[istart]),sizeof(double complex)*NC*NG);
 		
-//		printf("%d sending lbc to %d\n",rank,rank-1);	
-		MPI_Sendrecv(lbuff,3*NR*NG,MPI_DOUBLE,rank-1,rank,
-						rbuff,3*NR*NG,MPI_DOUBLE,rank+1,rank+1,MPI_COMM_WORLD,&status);
-//		printf("%d received rbc from %d\n",rank,rank+1);				
-		memcpy(&(fld->Tens->Pixx[iend]), (double complex *)&rbuff[0],sizeof(double complex)*NC*NG);
-		memcpy(&(fld->Tens->Pixy[iend]),(double complex *)&rbuff[NG*NR],sizeof(double complex)*NC*NG);
-		memcpy(&(fld->Tens->Piyy[iend]),(double complex *)&rbuff[2*NG*NR],sizeof(double complex)*NC*NG);		
+		MPI_Sendrecv_replace(lbuff,3*NR*NG,MPI_DOUBLE,rank-1,rank,
+					 rank-1,rank-1,MPI_COMM_WORLD,&status);
+
+
+		memcpy((double *)&(fld->Tens->Pixx[0]), &lbuff[0],sizeof(double complex)*NC*NG);
+		memcpy((double *)&(fld->Tens->Pixy[0]),&lbuff[NG*NR],sizeof(double complex)*NC*NG);
+		memcpy((double *)&(fld->Tens->Piyy[0]),&lbuff[2*NG*NR],sizeof(double complex)*NC*NG);		
+
+
+/*		Right BC		*/
+		memcpy(&rbuff[0],(double *)&(fld->Tens->Pixx[iend-NC*NG]),sizeof(double complex)*NC*NG);
+		memcpy(&rbuff[NG*NR],(double *)&(fld->Tens->Pixy[iend-NC*NG]),sizeof(double complex)*NC*NG);
+		memcpy(&rbuff[2*NG*NR],(double *)&(fld->Tens->Piyy[iend-NC*NG]),sizeof(double complex)*NC*NG);	
+		
+		MPI_Sendrecv_replace(rbuff,3*NR*NG,MPI_DOUBLE,rank+1,rank,
+						rank+1,rank+1,MPI_COMM_WORLD,&status);
+						
+		memcpy((double *)&(fld->Tens->Pixx[iend]), &rbuff[0],sizeof(double complex)*NC*NG);
+		memcpy((double *)&(fld->Tens->Pixy[iend]),&rbuff[NG*NR],sizeof(double complex)*NC*NG);
+		memcpy((double *)&(fld->Tens->Piyy[iend]),&rbuff[2*NG*NR],sizeof(double complex)*NC*NG);					
+
+	
+	}
 	}	
 	}
 //	 for(i=0;i<NG;i++) {

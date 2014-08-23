@@ -2,14 +2,15 @@
 
 void init(Field *fld) {
 	int i,j;
-
+	int is=0;
 	double Lx = fld->Params->Lx;
 	double Ly = fld->Params->Ly;
 	
 	MPI_Printf("\t Initializing Coordinates...\n");
 
+	for(i=0;i<rank;i++) is += Nxproc[i];
 	for(i=0;i<(Nx+2*NG);i++) {
-		fld->x[i] = -.5*Lx+(i+rank*Nxproc[0]-NG+.5)*(fld->Params->dx);
+		fld->x[i] = -.5*Lx+(i+is-NG+.5)*(fld->Params->dx);
 	}
 
 	for(i=0;i<Ny;i++) fld->y[i] = -.5*Ly + (i+.5)*(Ly/Ny);
@@ -289,8 +290,8 @@ void initphi(Field *fld) {
 			if (j<Ny) {
 				xs = (fld->x[i+NG])*(fld->x[i+NG]) + (fld->Params->xs)*(fld->Params->xs);
 				rad = (fld->y[j])*(fld->y[j])+xs;
-				rphi[RINDX] = -(fld->Params->Mp)/sqrt(rad);
-				rdxphi[RINDX] = (fld->Params->Mp)*(fld->x[i+NG])*pow(rad,-1.5);
+				rphi[j+NR*i] = -(fld->Params->Mp)/sqrt(rad);
+				rdxphi[j+NR*i] = (fld->Params->Mp)*(fld->x[i+NG])*pow(rad,-1.5);
 			}
 			else {
 				rphi[RINDX]=0;

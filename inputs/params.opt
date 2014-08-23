@@ -9,7 +9,7 @@
 
 ## Evolve the mean components
 
-#+BACKEVOLVE
++BACKEVOLVE
 
 ## Operator split on background shear term
 
@@ -21,11 +21,11 @@
 
 ## Derivative Order
 
-#+SECDERIV
++SECDERIV
 #+FOURTHDERIV
 #+SIXTHDERIV
 #+EIGTHDERIV
-+TENTHDERIV
+#+TENTHDERIV
 
 ## Restart option
 ## Restart files should be placed in the inputs directory 

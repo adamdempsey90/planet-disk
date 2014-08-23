@@ -48,6 +48,10 @@ int main (int argc, char *argv[]) {
 
 	init(fld);
 
+#ifdef OUTPHI
+	MPI_Printf("Outputting Potential...\n");
+	output_phi(fld);
+#endif
 	set_bc(fld);
 	MPI_Printf("Outputting Coordinates...\n");
 
@@ -102,7 +106,7 @@ int main (int argc, char *argv[]) {
      
       
    	if( t >= fld->Params->t0 + i * (fld->Params->endt) / ((double) fld->Params->numf)) { 
-   		 MPI_Printf ("\t\t OUTPUT %d, step size = %.5e, at t=%.5e \n", outnum,h,t);
+  		 MPI_Printf ("\t\t OUTPUT %d, step size = %.5e, at t=%.5e \n", outnum,h,t);
 		
 		output(fld);
       	i++;

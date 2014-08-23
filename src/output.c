@@ -107,6 +107,7 @@ void output_rhs(Field *fld) {
 	fs = fopen(fnames,"wb");
 	if (fs == NULL) printf("ERROR: Couldn't open dtdens file\n");
 
+	write_cheader(fu); write_cheader(fv); write_cheader(fs);
 	fwrite((double *)fld->dtu,sizeof(double),Nx*NR,fu);
 	fwrite((double *)fld->dtv,sizeof(double),Nx*NR,fv);
 	fwrite((double *)fld->dtsig,sizeof(double),Nx*NR,fs);
@@ -181,7 +182,27 @@ void output_reals(Field *fld) {
 	dxoutnum++;
 	return;
 }
+void output_phi(Field *fld) {
+	FILE *fp, *fdp;
+	char fnamep[50], fnamedp[50];
+	
+	sprintf(fnamep,"outputs/id%d/phi.dat",rank);
+	sprintf(fnamedp,"outputs/id%d/dxphi.dat",rank);
 
+	fp = fopen(fnamep,"wb");
+	if (fp == NULL) printf("ERROR: Couldn't open phi file\n");
+	fdp = fopen(fnamedp,"wb");
+	if (fdp == NULL) printf("ERROR: Couldn't open dxphi file\n");
+
+
+
+	write_cheader(fp); write_cheader(fdp);
+	fwrite((double *)&fld->phi[istart],sizeof(double),Nx*NR,fp);
+	fwrite((double *)&fld->dxphi[istart],sizeof(double),Nx*NR,fdp);
+
+	fclose(fp); fclose(fdp); 	
+	return;
+}
 void output_defines(void) {
 	FILE *f = fopen("outputs/id0/params.txt","w");
 	fprintf(f,"Configuration parameters:\n");

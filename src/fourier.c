@@ -187,7 +187,7 @@ void fft_free(void) {
 void fft_phi(double *rphi, double complex *cphi) {
 	memcpy(wr1,rphi,sizeof(double)*Nx*NR);
 	fftw_execute(r2c1);
-	memcpy(&cphi[NG*NC],wc1,sizeof(double complex)*Nx*NC);
+	memcpy(&cphi[istart],wc1,sizeof(double complex)*Nx*NC);
 	return;
 }
 void transform(Field *fld) {

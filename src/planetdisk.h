@@ -122,6 +122,7 @@ void free_field(Field *fld);
 void initphi(Field *fld);
 void output(Field *fld);
 void output_coords(Field *fld);
+void output_phi(Field *fld);
 void read_input(Field *fld);
 void global_c2r(double *y, Field *fld);
 void global_r2c(const double *y, Field *fld);

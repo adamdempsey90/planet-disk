@@ -1,6 +1,7 @@
 
 class Field():
 	def __init__(self,time,np,dir=''):
+				
 		vx,vy,dens,x,self.k,self.y,Nx,NC,splits = loadvars(np,time);
 		self.Nx = Nx.sum()
 		self.NC = NC.sum()
@@ -61,7 +62,7 @@ def loadvars(np,time):
 			temp += Nx[j]
 		splits.append(temp)
 	
-	return vx,vy,dens,x,k,y,Nx,Ny,splits
+	return vx,vy,dens,x,k,y,Nx,NC,splits
 			
 def realspace(fld):
 #	x=hstack((-fld.x[::-1],fld.x))
@@ -259,3 +260,19 @@ def calcTwd(fld,nu):
 	
 	
 	return
+	
+def loadphi(np,dir=''):
+	x=[]
+	phi=[]
+	for i in range(np):
+		temp = fromfile(dir+'id'+str(i)+'/dtvy_0.dat',dtype='complex')
+		Nx = int(real(temp[0]))
+		NC = int(real(temp[1]))/2 + 1
+		print Nx, NC
+		phi.append(temp[2:].reshape((Nx,NC)))
+		
+		temp = fromfile(dir+'id'+str(i)+'/coords.dat')
+		
+		x.append(temp[2:Nx+2])
+	
+	return phi,x

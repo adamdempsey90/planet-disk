@@ -45,15 +45,12 @@ void fill_rhs(Field *fld, double t) {
 	double complex phi, dxphi;
 	
 /* Fill the derivative arrays */
-//	printf("\tCalculating Derivatives...\n");
 
 	calc_deriv(fld->u,fld->dxu,fld->dyu,fld->Params->dx,fld->kk);
 	calc_deriv(fld->v,fld->dxv,fld->dyv,fld->Params->dx,fld->kk);
 	calc_deriv(fld->sig,fld->dxsig,fld->dysig,fld->Params->dx,fld->kk);
 
-//	output_derivs(fld);
 /*	Fill RHS arrays with any non-convolution terms*/	
-//	printf("\tAdding Non-Convolution Terms...\n");
 
 #ifdef OPENMP 
 	#pragma omp parallel private(i,k,phi,dxphi) shared(fld) num_threads(NUMTHREADS)
@@ -72,13 +69,12 @@ void fill_rhs(Field *fld, double t) {
 				dxphi = calc_pot(fld->dxphi[i],t,fld->Params->tau);
 
 				fld->dtu[i-istart] =  om2*(fld->v[i]) - dxphi;
-				fld->dtv[i-istart] =  (qom-om2)*(fld->u[i]) - I*k*phi;
+
+				fld->dtv[i-istart] = (qom-om2)*(fld->u[i]) -I*k*phi;
 				fld->dtsig[i-istart] = 0;
-#ifndef SHEARSPLIT
 				fld->dtu[i-istart] += qom*I*k*(fld->u[i])*(fld->xx[i-istart]);
 				fld->dtv[i-istart] += qom*I*k*(fld->v[i])*(fld->xx[i-istart]);
 				fld->dtsig[i-istart] += qom*I*k*(fld->sig[i])*(fld->xx[i-istart]);
-#endif
 			}
 			else {
 				fld->dtu[i-istart] = 0;
@@ -109,7 +105,6 @@ void fill_rhs(Field *fld, double t) {
 	convolve(&fld->dysig[istart],&fld->v[istart],fld->dtsig,-1);
 	
 /* Add viscosity and pressure */
-//	printf("\tAdding Viscosity...\n");
 	
 	add_visc(fld);
 
@@ -165,11 +160,13 @@ void zero_derivs(Field *fld) {
 		fld->dyu[i] = 0;
 		fld->dyv[i]= 0;
 		fld->dysig[i] = 0;
-		fld->dtu[i] = 0;
-		fld->dtv[i] = 0;
-		fld->dtsig[i] = 0;
 		fld->Tens->divPix[i] = 0;
 		fld->Tens->divPiy[i] = 0;
+		if (i<Nx*NC) {
+			fld->dtu[i] = 0;
+			fld->dtv[i] = 0;
+			fld->dtsig[i] = 0;
+		}
 	}
 	return;
 }
