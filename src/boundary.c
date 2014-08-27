@@ -128,11 +128,10 @@ void set_bc(Field *fld) {
 
 	return;
 }
-void set_pi_bc(Field *fld) {
+void set_tens_bc(Field *fld) {
 	int i;
 	MPI_Status status;
 	double qom = (fld->Params->q)*(fld->Params->omega);
-	double c = (fld->Params->c)*(fld->Params->c);
 	double nu = (fld->Params->nu);
 	
 	
@@ -140,14 +139,14 @@ void set_pi_bc(Field *fld) {
 	if (np == 1) {
 	
 		for(i=0;i<istart;i++) {
-				fld->Tens->Pixx[i] = -c*(fld->sig[i]);
-				fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
-				fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
+				fld->Tens->Txx[i] = 0;
+				fld->Tens->Txy[i] = -nu*qom;
+				fld->Tens->Tyy[i] = 0;	
 		}
 		for(i=iend;i<NTOTC;i++) {
-				fld->Tens->Pixx[i] = -c*(fld->sig[i]);
-				fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
-				fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
+				fld->Tens->Txx[i] =0;
+				fld->Tens->Txy[i] = -nu*qom;
+				fld->Tens->Tyy[i] = 0;	
 		}
 	
 	
@@ -155,46 +154,46 @@ void set_pi_bc(Field *fld) {
 	else {
 	if (rank==0) {
 /* Proc 0 sends its right b.c to proc 1 */
-		memcpy(&rbuff[0],(double *)&(fld->Tens->Pixx[iend-NC*NG]),sizeof(double complex)*NC*NG);
-		memcpy(&rbuff[NG*NR],(double *)&(fld->Tens->Pixy[iend-NC*NG]),sizeof(double complex)*NC*NG);
-		memcpy(&rbuff[2*NG*NR],(double *)&(fld->Tens->Piyy[iend-NC*NG]),sizeof(double complex)*NC*NG);
+		memcpy(&rbuff[0],(double *)&(fld->Tens->Txx[iend-NC*NG]),sizeof(double complex)*NC*NG);
+		memcpy(&rbuff[NG*NR],(double *)&(fld->Tens->Txy[iend-NC*NG]),sizeof(double complex)*NC*NG);
+		memcpy(&rbuff[2*NG*NR],(double *)&(fld->Tens->Tyy[iend-NC*NG]),sizeof(double complex)*NC*NG);
 		
 //		printf("%d sending rbc to %d\n",rank,rank+1);
 		MPI_Sendrecv_replace(rbuff,3*NR*NG,MPI_DOUBLE,rank+1,rank,
 						rank+1,rank+1,MPI_COMM_WORLD,&status);
 //		printf("%d sent rbc to %d\n",rank,rank+1);
-		memcpy(&(fld->Tens->Pixx[iend]), (double complex *)&rbuff[0],sizeof(double complex)*NC*NG);
-		memcpy(&(fld->Tens->Pixy[iend]),(double complex *)&rbuff[NG*NR],sizeof(double complex)*NC*NG);
-		memcpy(&(fld->Tens->Piyy[iend]),(double complex *)&rbuff[2*NG*NR],sizeof(double complex)*NC*NG);	
+		memcpy(&(fld->Tens->Txx[iend]), (double complex *)&rbuff[0],sizeof(double complex)*NC*NG);
+		memcpy(&(fld->Tens->Txy[iend]),(double complex *)&rbuff[NG*NR],sizeof(double complex)*NC*NG);
+		memcpy(&(fld->Tens->Tyy[iend]),(double complex *)&rbuff[2*NG*NR],sizeof(double complex)*NC*NG);	
 		
 /* Set left b.c for proc 0 */		
 		for(i=0;i<istart;i++) {
-			fld->Tens->Pixx[i] = -c*(fld->sig[i]);
-			fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
-			fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
+			fld->Tens->Txx[i] = 0;
+			fld->Tens->Txy[i] = -nu*qom;
+			fld->Tens->Tyy[i] = 0;	
 		}
 	}
 	else {
 	if (rank==np-1) {
 /* Proc np-1 receives its left b.c from proc np-2 */
-		memcpy(&lbuff[0],(double *)&(fld->Tens->Pixx[istart]),sizeof(double complex)*NC*NG);
-		memcpy(&lbuff[NG*NR],(double *)&(fld->Tens->Pixy[istart]),sizeof(double complex)*NC*NG);
-		memcpy(&lbuff[2*NG*NR],(double *)&(fld->Tens->Piyy[istart]),sizeof(double complex)*NC*NG);
+		memcpy(&lbuff[0],(double *)&(fld->Tens->Txx[istart]),sizeof(double complex)*NC*NG);
+		memcpy(&lbuff[NG*NR],(double *)&(fld->Tens->Txy[istart]),sizeof(double complex)*NC*NG);
+		memcpy(&lbuff[2*NG*NR],(double *)&(fld->Tens->Tyy[istart]),sizeof(double complex)*NC*NG);
 		
 //		printf("%d receiving lbc from %d\n",rank,rank-1);
 		MPI_Sendrecv_replace(lbuff,3*NR*NG,MPI_DOUBLE,rank-1,rank,
 					 rank-1,rank-1,MPI_COMM_WORLD,&status);
 //		printf("%d received lbc from %d\n",rank,rank-1);
 /* Copy over from buffer */
-		memcpy(&(fld->Tens->Pixx[0]), (double complex *)&lbuff[0],sizeof(double complex)*NC*NG);
-		memcpy(&(fld->Tens->Pixy[0]),(double complex *)&lbuff[NG*NR],sizeof(double complex)*NC*NG);
-		memcpy(&(fld->Tens->Piyy[0]),(double complex *)&lbuff[2*NG*NR],sizeof(double complex)*NC*NG);		
+		memcpy(&(fld->Tens->Txx[0]), (double complex *)&lbuff[0],sizeof(double complex)*NC*NG);
+		memcpy(&(fld->Tens->Txy[0]),(double complex *)&lbuff[NG*NR],sizeof(double complex)*NC*NG);
+		memcpy(&(fld->Tens->Tyy[0]),(double complex *)&lbuff[2*NG*NR],sizeof(double complex)*NC*NG);		
 
 /* Set right b.c for proc np-1 */
 		for(i=iend;i<NTOTC;i++) {
-			fld->Tens->Pixx[i] = -c*(fld->sig[i]);
-			fld->Tens->Pixy[i] = -nu*qom*(fld->sig[i]);
-			fld->Tens->Piyy[i] = -c*(fld->sig[i]);	
+			fld->Tens->Txx[i] = 0;
+			fld->Tens->Txy[i] = -nu*qom;
+			fld->Tens->Tyy[i] = 0;	
 		}
 	}
 	else {
@@ -206,30 +205,30 @@ void set_pi_bc(Field *fld) {
 
 
 /* 		Left BC 		*/
-		memcpy(&lbuff[0],(double *)&(fld->Tens->Pixx[istart]),sizeof(double complex)*NC*NG);
-		memcpy(&lbuff[NG*NR],(double *)&(fld->Tens->Pixy[istart]),sizeof(double complex)*NC*NG);
-		memcpy(&lbuff[2*NG*NR],(double *)&(fld->Tens->Piyy[istart]),sizeof(double complex)*NC*NG);
+		memcpy(&lbuff[0],(double *)&(fld->Tens->Txx[istart]),sizeof(double complex)*NC*NG);
+		memcpy(&lbuff[NG*NR],(double *)&(fld->Tens->Txy[istart]),sizeof(double complex)*NC*NG);
+		memcpy(&lbuff[2*NG*NR],(double *)&(fld->Tens->Tyy[istart]),sizeof(double complex)*NC*NG);
 		
 		MPI_Sendrecv_replace(lbuff,3*NR*NG,MPI_DOUBLE,rank-1,rank,
 					 rank-1,rank-1,MPI_COMM_WORLD,&status);
 
 
-		memcpy((double *)&(fld->Tens->Pixx[0]), &lbuff[0],sizeof(double complex)*NC*NG);
-		memcpy((double *)&(fld->Tens->Pixy[0]),&lbuff[NG*NR],sizeof(double complex)*NC*NG);
-		memcpy((double *)&(fld->Tens->Piyy[0]),&lbuff[2*NG*NR],sizeof(double complex)*NC*NG);		
+		memcpy((double *)&(fld->Tens->Txx[0]), &lbuff[0],sizeof(double complex)*NC*NG);
+		memcpy((double *)&(fld->Tens->Txy[0]),&lbuff[NG*NR],sizeof(double complex)*NC*NG);
+		memcpy((double *)&(fld->Tens->Tyy[0]),&lbuff[2*NG*NR],sizeof(double complex)*NC*NG);		
 
 
 /*		Right BC		*/
-		memcpy(&rbuff[0],(double *)&(fld->Tens->Pixx[iend-NC*NG]),sizeof(double complex)*NC*NG);
-		memcpy(&rbuff[NG*NR],(double *)&(fld->Tens->Pixy[iend-NC*NG]),sizeof(double complex)*NC*NG);
-		memcpy(&rbuff[2*NG*NR],(double *)&(fld->Tens->Piyy[iend-NC*NG]),sizeof(double complex)*NC*NG);	
+		memcpy(&rbuff[0],(double *)&(fld->Tens->Txx[iend-NC*NG]),sizeof(double complex)*NC*NG);
+		memcpy(&rbuff[NG*NR],(double *)&(fld->Tens->Txy[iend-NC*NG]),sizeof(double complex)*NC*NG);
+		memcpy(&rbuff[2*NG*NR],(double *)&(fld->Tens->Tyy[iend-NC*NG]),sizeof(double complex)*NC*NG);	
 		
 		MPI_Sendrecv_replace(rbuff,3*NR*NG,MPI_DOUBLE,rank+1,rank,
 						rank+1,rank+1,MPI_COMM_WORLD,&status);
 						
-		memcpy((double *)&(fld->Tens->Pixx[iend]), &rbuff[0],sizeof(double complex)*NC*NG);
-		memcpy((double *)&(fld->Tens->Pixy[iend]),&rbuff[NG*NR],sizeof(double complex)*NC*NG);
-		memcpy((double *)&(fld->Tens->Piyy[iend]),&rbuff[2*NG*NR],sizeof(double complex)*NC*NG);					
+		memcpy((double *)&(fld->Tens->Txx[iend]), &rbuff[0],sizeof(double complex)*NC*NG);
+		memcpy((double *)&(fld->Tens->Txy[iend]),&rbuff[NG*NR],sizeof(double complex)*NC*NG);
+		memcpy((double *)&(fld->Tens->Tyy[iend]),&rbuff[2*NG*NR],sizeof(double complex)*NC*NG);					
 
 	
 	}
@@ -256,10 +255,7 @@ void wavekillbc(Field *fld,double dt)
 	double R,tau,x;
 	double x_inf = -(fld->Params->Lx)*.5*.95;
 	double x_sup = (fld->Params->Lx)*.5*0.95;
-// #ifdef OPENMP 
-// 	#pragma omp parallel private(i,x,R,tau) shared(fld) num_threads(NUMTHREADS)
-// 	#pragma omp for schedule(static)
-// #endif	
+
 	for(i=istart;i<iend;i++) {
 		x = fld->xx[i];
 		R=0;
@@ -271,22 +267,10 @@ void wavekillbc(Field *fld,double dt)
 
 		if (R>0.0) {
 			tau /= R;
-			if (fld->kk[i-istart]==0) {
-#ifdef BACKEVOLVE	
-				fld->u[i] = (fld->u[i])/(1+dt);
-				fld->v[i] = (fld->v[i])/(1+dt);
-				fld->sig[i] = ((fld->sig[i])*tau + (fld->Params->sig0)*dt)/(dt+tau);
-#endif
-			}
-			else {
-#ifdef WAVEEVOLVE	
-					fld->u[i] = (fld->u[i])/(1+dt);
-					fld->v[i] = (fld->v[i])/(1+dt);
-					fld->sig[i]=(fld->sig[i])/(1+dt);
-#endif
-			}
+			fld->u[i] = (fld->u[i])/(1+dt/tau);
+			fld->v[i] = (fld->v[i])/(1+dt/tau);
+			fld->sig[i] = (fld->sig[i])/(1+dt/tau);
 		}
-	
 	}
 	
 	return;

@@ -58,56 +58,24 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 
 	return;
 }
-void convolve_inv(double complex *q1, double complex *q2, double complex *res, double complex mult) {
-/*		Convolution function using previously declared de-aliasing mask
-		This function uses the inverse of q1, so make sure q1 != 0 everywhere.
-	Inputs: q1 & q2 are the two complex arrays being convolved 
-			res is an initialized array to which the convolution will be added 
-			mult is a constant multiplication factor 
-*/
 
-	int i,j;
+void getsigma(double complex *lsig, double complex *sig) {
+/* Get FT(\Sigma) from FT(log(\Sigma)) */
 
-/* De-alias with 2/3 truncation rule */	
-#ifdef OPENMP 
-	#pragma omp parallel private(i) shared(q1,q2,wc1,wc2,mask) num_threads(NUMTHREADS)
-	#pragma omp for schedule(static)
-#endif	
-	for(i=0;i<Nx*NC;i++) {
-		wc1[i] = mask[i]*q1[i]; 
-		wc2[i] = q2[i]*mask[i]*mult;
-//		printf("%lg %lg\n",cabs(wc1[i]), cabs(wc2[i]));
-	}
-
-/* FFT these to real space */	
+	int i;
+	
+	for(i=istart;i<iend;i++) wc1[i-istart] = lsig[i]*mask[i-istart];
+	
 	fftw_execute(c2r1);
-	fftw_execute(c2r2);
-
-/* Form product in real space */
-#ifdef OPENMP 
-	#pragma omp parallel private(i,j) shared(wr3,wr2,wr1) num_threads(NUMTHREADS)
-	#pragma omp for schedule(static)
-#endif	
-	for(i=0;i<Nx;i++) {
-		for(j=0;j<NR;j++) {
-			if(wr1[RINDX]!=0) wr3[RINDX] = wr2[RINDX]/wr1[RINDX];
-			else wr3[RINDX]= 0;
-		}
-	}
-/* FFT back to complex space */
-	fftw_execute(r2c3);
 	
-/* add output */
+	for(i=0;i<Nx*NR;i++) wr1[i] = exp(wr1[i]);
 	
-	for(i=0;i<Nx;i++) {
-		for(j=0;j<Nmax;j++) {
-			res[CINDX] += wc3[CINDX]/Ny;
-		}
-	}	
-
+	fftw_execute(r2c1);
+	
+	for(i=0;i<Nx*NC;i++) sig[i] = wc1[i] / Ny;
+	
 	return;
 }
-
 
 void init_fft(void) {
 	int i,j;

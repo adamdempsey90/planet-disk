@@ -60,9 +60,6 @@ typedef struct Parameters {
 
 typedef struct Stress {
 	double complex *Txx, *Txy, *Tyy;
-	double complex *Pixx, *Pixy, *Piyy;
-	double complex *divPix, *divPiy;
-
 } Stress;
 
 typedef struct Field {
@@ -113,7 +110,6 @@ void free_rk45(void);
 void fill_rhs(Field *fld, double t);
 double complex calc_pot(double complex phi,double t, double tau);
 void convolve(double complex *q1, double complex *q2, double complex *res, double complex mult);
-void convolve_inv(double complex *q1, double complex *q2, double complex *res, double complex mult);
 void init_fft(void);
 void fft_free(void);
 void fft_phi(double *rphi, double complex *cphi);
@@ -137,7 +133,7 @@ void output_derivs(Field *fld);
 void zero_derivs(Field *fld);
 void set_bc(Field *fld);
 void output_rhs(Field *fld);
-void output_pi(Field *fld);
+void output_tenss(Field *fld);
 void transform(Field *fld);
 void output_reals(Field *fld);
 void wavekillbc(Field *fld,double dt);
@@ -147,4 +143,5 @@ void shear_advection(Field *fld,double dt);
 void init_buff(void);
 void free_buff(void);
 void init_output(void);
-void set_pi_bc(Field *fld);
+void set_tens_bc(Field *fld);
+void getsigma(double complex *lsig, double complex *sig);

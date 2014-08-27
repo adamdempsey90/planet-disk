@@ -41,14 +41,15 @@ void fill_rhs(Field *fld, double t) {
 	int i;
 	double qom = (fld->Params->q)*(fld->Params->omega);
 	double om2 = 2*(fld->Params->omega);
+	double c = (fld->Params->c)*(fld->Params->c);
 	double k;
 	double complex phi, dxphi;
 	
 /* Fill the derivative arrays */
 
-	calc_deriv(fld->u,fld->dxu,fld->dyu,fld->Params->dx,fld->kk);
-	calc_deriv(fld->v,fld->dxv,fld->dyv,fld->Params->dx,fld->kk);
-	calc_deriv(fld->sig,fld->dxsig,fld->dysig,fld->Params->dx,fld->kk);
+	calc_deriv(fld->u,&fld->dxu[istart],&fld->dyu[istart],fld->Params->dx,fld->kk);
+	calc_deriv(fld->v,&fld->dxv[istart],&fld->dyv[istart],fld->Params->dx,fld->kk);
+	calc_deriv(fld->sig,&fld->dxsig[istart],&fld->dysig[istart],fld->Params->dx,fld->kk);
 
 /*	Fill RHS arrays with any non-convolution terms*/	
 
@@ -68,13 +69,14 @@ void fill_rhs(Field *fld, double t) {
 				phi = calc_pot(fld->phi[i],t,fld->Params->tau);
 				dxphi = calc_pot(fld->dxphi[i],t,fld->Params->tau);
 
-				fld->dtu[i-istart] =  om2*(fld->v[i]) - dxphi;
+				fld->dtu[i-istart] =  om2*(fld->v[i]) -c*(fld->dxsig[i]) - dxphi;
 
-				fld->dtv[i-istart] = (qom-om2)*(fld->u[i]) -I*k*phi;
-				fld->dtsig[i-istart] = 0;
-				fld->dtu[i-istart] += qom*I*k*(fld->u[i])*(fld->xx[i-istart]);
-				fld->dtv[i-istart] += qom*I*k*(fld->v[i])*(fld->xx[i-istart]);
-				fld->dtsig[i-istart] += qom*I*k*(fld->sig[i])*(fld->xx[i-istart]);
+				fld->dtv[i-istart] = (qom-om2)*(fld->u[i]) -c*(fld->dysig[i]) -I*k*phi;
+				fld->dtsig[i-istart] = -(fld->dxu[i] + fld->dyv[i]);
+				
+				fld->dtu[i-istart] += qom(fld->dyu[i])*(fld->xx[i-istart]);
+				fld->dtv[i-istart] += qom*(fld->dyv[i])*(fld->xx[i-istart]);
+				fld->dtsig[i-istart] += qom*(fld->dysig[i])*(fld->xx[i-istart]);
 			}
 			else {
 				fld->dtu[i-istart] = 0;
@@ -99,12 +101,10 @@ void fill_rhs(Field *fld, double t) {
 	convolve(&fld->u[istart],&fld->dxv[istart],fld->dtv,-1);
 	convolve(&fld->v[istart],&fld->dyv[istart],fld->dtv,-1);
 
-	convolve(&fld->sig[istart],&fld->dxu[istart],fld->dtsig,-1);
-	convolve(&fld->dxsig[istart],&fld->u[istart],fld->dtsig,-1);
-	convolve(&fld->sig[istart],&fld->dyv[istart],fld->dtsig,-1);
-	convolve(&fld->dysig[istart],&fld->v[istart],fld->dtsig,-1);
-	
-/* Add viscosity and pressure */
+	convolve(&fld->u[istart],&fld->dxsig[istart],fld->dtsig,-1);
+	convolve(&fld->v[istart],&fld->dysig[istart],fld->dtsig,-1);
+
+/* Add viscosity */
 	
 	add_visc(fld);
 
@@ -160,8 +160,6 @@ void zero_derivs(Field *fld) {
 		fld->dyu[i] = 0;
 		fld->dyv[i]= 0;
 		fld->dysig[i] = 0;
-		fld->Tens->divPix[i] = 0;
-		fld->Tens->divPiy[i] = 0;
 		if (i<Nx*NC) {
 			fld->dtu[i] = 0;
 			fld->dtv[i] = 0;

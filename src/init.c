@@ -32,9 +32,8 @@ void init(Field *fld) {
 			fld->xx[CINDX-istart] = fld->x[i];
 			fld->u[CINDX] = 0;
 			fld->v[CINDX] = 0;
-			if(j==0)	fld->sig[CINDX] = fld->Params->sig0;
+			fld->sig[CINDX] = 0;
 			
-			else	fld->sig[CINDX] = 0;
 			fld->dxu[CINDX] = 0;
 			fld->dxv[CINDX] = 0;
 			fld->dxsig[CINDX] = 0;
@@ -42,17 +41,6 @@ void init(Field *fld) {
 			fld->Tens->Txx[CINDX] = 0;
 			fld->Tens->Txy[CINDX] = 0;
 			fld->Tens->Tyy[CINDX] = 0;
-			
-// 			fld->Tens->Pixx[CINDX] = -(fld->Params->c)(fld->Params->c)*(fld->Params->sig0);
-// 			fld->Tens->Pixy[CINDX] = -(fld->Params->nu)*(fld->Params->q)*(fld->Params->omega)*(fld->Params->sig0);
-// 			fld->Tens->Piyy[CINDX] = -(fld->Params->c)(fld->Params->c)*(fld->Params->sig0);
-
-			fld->Tens->Pixx[CINDX] = 0;
-			fld->Tens->Pixy[CINDX] = 0;
-			fld->Tens->Piyy[CINDX] = 0;
-
-			fld->Tens->divPix[CINDX] = 0;
-			fld->Tens->divPiy[CINDX] = 0;
 		}
 	 
 	}
@@ -62,8 +50,6 @@ void init(Field *fld) {
 		fld->dxsig[i] = 0;
 		fld->phi[i] = 0;
 		fld->dxphi[i] = 0;
-		fld->Tens->divPix[i] = 0;
-		fld->Tens->divPiy[i] = 0;
 		fld->Tens->Txx[i] = 0;
 		fld->Tens->Txy[i] = 0;
 		fld->Tens->Tyy[i] = 0;
@@ -74,8 +60,6 @@ void init(Field *fld) {
 		fld->dxsig[i] = 0;
 		fld->phi[i] = 0;
 		fld->dxphi[i] = 0;
-		fld->Tens->divPix[i] = 0;
-		fld->Tens->divPiy[i] = 0;
 		fld->Tens->Txx[i] = 0;
 		fld->Tens->Txy[i] = 0;
 		fld->Tens->Tyy[i] = 0;
@@ -209,14 +193,6 @@ void allocate_field(Field *fld) {
 	fld->Tens->Txy = (double complex *)malloc(sizeof(double complex)*NTOTC);
 	fld->Tens->Tyy = (double complex *)malloc(sizeof(double complex)*NTOTC);
 
-	fld->Tens->Pixx = (double complex *)malloc(sizeof(double complex)*NTOTC);
-	fld->Tens->Pixy = (double complex *)malloc(sizeof(double complex)*NTOTC);
-	fld->Tens->Piyy = (double complex *)malloc(sizeof(double complex)*NTOTC);
-
-	
-	fld->Tens->divPix = (double complex *)malloc(sizeof(double complex)*NTOTC);
-	fld->Tens->divPiy = (double complex *)malloc(sizeof(double complex)*NTOTC);
-
 	fld->vx = (double *)malloc(sizeof(double)*Nx*NR);
 	fld->vy =  (double *)malloc(sizeof(double)*Nx*NR);
 	fld->dens =  (double *)malloc(sizeof(double)*Nx*NR);
@@ -253,13 +229,6 @@ void free_field(Field *fld) {
 	free(fld->Tens->Txx);
 	free(fld->Tens->Txy);
 	free(fld->Tens->Tyy);
-
-	free(fld->Tens->Pixx);
-	free(fld->Tens->Pixy);
-	free(fld->Tens->Piyy);
-	
-	free(fld->Tens->divPix);
-	free(fld->Tens->divPiy);
 
 	free(fld->vx); 
 	free(fld->vy);

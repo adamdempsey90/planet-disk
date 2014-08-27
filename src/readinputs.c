@@ -72,7 +72,7 @@ void read_input(Field *fld) {
   	  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf,fld->Params->tol);
   
   	if (rank==0) {
-		f = fopen("outputs/params.txt","a");
+		f = fopen("outputs/params.txt","w");
 		fprintf(f,"Input Parameters: \n \
 		Nx = %d\n \
 		Ny = %d\n \

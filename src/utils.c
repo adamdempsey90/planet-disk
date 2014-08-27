@@ -51,12 +51,12 @@ void calc_deriv(double complex *in, double complex *dxout, double complex *dyout
 	#pragma omp parallel private(i,temp,d) shared(k,in,dxout,dyout,dx) num_threads(NUMTHREADS)
 	#pragma omp for schedule(static)
 #endif	
-	for(i=istart;i<iend;i++) {
-			if (dyout != NULL) dyout[i] += I*k[i-istart]*in[i];
+	for(i=0;i<Nx*NC;i++) {
+			if (dyout != NULL) dyout[i] += I*k[i]*in[i+istart];
 			if (dxout != NULL) {
 				temp = 0;
 				for(d=0;d<2*NG;d++) {
-					temp += in[i+NC*deriv.ind[d]]*deriv.coeffs[d];
+					temp += in[i+istart+NC*deriv.ind[d]]*deriv.coeffs[d];
 
 				}						
 				dxout[i] += temp/dx;
