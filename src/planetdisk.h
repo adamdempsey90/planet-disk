@@ -97,6 +97,7 @@ typedef struct Derivative {
 } Derivative;
 		
 int Nx, Ny, Nmax, outnum, dxoutnum, func_calls, dtoutnum,pioutnum;
+int numstep;
 int *Nxproc;
 int np,rank;
 double kmax;

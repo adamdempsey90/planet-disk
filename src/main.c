@@ -80,14 +80,14 @@ int main (int argc, char *argv[]) {
 	MPI_Printf("Starting the Time Loop...\n");
 	MPI_Printf("\t Starting Time = %lg \t Ending Time = %lg \n",t,t1);
 	
-	
+	numstep=0;
   while (t < t1)
     {
       
     dt = t;
 
     int status = rk45_step_apply(fld,&t,&h); 
-    
+    numstep++;
      if (status == -1) {
      	MPI_Printf("ERROR With Step...\nTerminating Run...\n");
         break;
@@ -97,7 +97,7 @@ int main (int argc, char *argv[]) {
 #ifdef SHEARSPLIT
 	shear_advection(fld,dt);
 #endif
-	MPI_Printf ("\t step size = %.5e, at t=%.5e \n", dt, t);
+	MPI_Printf ("\t step #%d, step size = %.5e, at t=%.5e \n", numstep,dt, t);
    
 
 #ifdef WAVEKILLBC

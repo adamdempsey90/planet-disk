@@ -21,11 +21,11 @@
 
 ## Derivative Order
 
-+SECDERIV
+#+SECDERIV
 #+FOURTHDERIV
 #+SIXTHDERIV
 #+EIGTHDERIV
-#+TENTHDERIV
++TENTHDERIV
 
 ## Restart option
 ## Restart files should be placed in the inputs directory 

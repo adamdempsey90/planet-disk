@@ -9,6 +9,12 @@ double *mask;
 
 fftw_plan r2c1, c2r1,r2c2, c2r2,r2c3, c2r3;
 
+/* This file contains all FFFTW function calls.
+	We are using real to complex transforms with no default normalization.
+	We normalize by Ny when doing a r2c transform
+*/
+
+
 void convolve(double complex *q1, double complex *q2, double complex *res, double complex mult) {
 /*		Convolution function using previously declared de-aliasing mask
 	Inputs: q1 & q2 are the two complex arrays being convolved 
@@ -37,7 +43,7 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 	#pragma omp parallel private(i) shared(wr1,wr2,wr3) num_threads(NUMTHREADS)
 	#pragma omp for schedule(static)
 #endif	
-	for(i=0;i<Nx*NR;i++) wr3[i] = wr1[i]*wr2[i]/(Ny*Ny);
+	for(i=0;i<Nx*NR;i++) wr3[i] = wr1[i]*wr2[i];
 
 /* FFT back to complex space */
 	fftw_execute(r2c3);
@@ -46,7 +52,7 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<Nmax;j++) {
-			res[CINDX] += wc3[CINDX];
+			res[CINDX] += wc3[CINDX]/Ny;
 		}
 	}	
 
@@ -95,7 +101,7 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 	
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<Nmax;j++) {
-			res[CINDX] += wc3[CINDX];
+			res[CINDX] += wc3[CINDX]/Ny;
 		}
 	}	
 
@@ -185,9 +191,12 @@ void fft_free(void) {
 }
 
 void fft_phi(double *rphi, double complex *cphi) {
+	int i;
 	memcpy(wr1,rphi,sizeof(double)*Nx*NR);
 	fftw_execute(r2c1);
-	memcpy(&cphi[istart],wc1,sizeof(double complex)*Nx*NC);
+	for(i=istart;i<iend;i++) cphi[i] = wc1[i-istart]/Ny;
+		
+//	memcpy(&cphi[istart],wc1,sizeof(double complex)*Nx*NC);
 	return;
 }
 void transform(Field *fld) {

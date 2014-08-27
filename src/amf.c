@@ -27,20 +27,22 @@ void amf(Field *fld) {
 
 
 	for(i=0;i<Nx+2*NG;i++) {
-		Twd=[i] = 0;
-		Fb[i] = 0;
+		Twd=[i] = twdpi[i*NC];
+		Fb[i] = (fld->vy[i*NC]+om2*(fld->x[i]))*(fld->sig[i*NC])*(fld->u[i*NC])
+				- fld->Tens->Pixy[i*NC];
 		for(j=0;j<NC;j++) {
 			
 			if (i<Nx) {
-				indx = j+(i+NG)*NC
+				indx = j+(i+NG)*NC;
 				Twd[i] += -(fld->sig[istart+i*NC])*conj(fld->u[indx])*(fld->dxv[indx])
-					+(fld->dxv[istart+i*NC]+om2*(fld->x[i+NG]))*conj(fld->sig[indx])*(fld->u[indx])
-					+twdpi[i*NC];
+					+(fld->dxv[istart+i*NC]+om2*(fld->x[i+NG]))*conj(fld->sig[indx])*(fld->u[indx]);
 			}
-			Fb[i] += 
+			Fb[i] += (fld->vy[i*NC]+om2*(fld->x[i]))*conj(fld->sig[CINDX])*(fld->u[CINDX]);
+
 		}
 	
-
+	calc_deriv(Fb,dxFb,NULL,fld->Params->dx,NULL);
+	
 
 	for(i=0;i<Nx+2*NG;i++) {
 		Fb
