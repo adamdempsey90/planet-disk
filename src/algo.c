@@ -72,9 +72,9 @@ void fill_rhs(Field *fld, double t) {
 
 				fld->dtv[i-istart] = (qom-om2)*(fld->u[i]) -I*k*phi;
 				fld->dtsig[i-istart] = 0;
-				fld->dtu[i-istart] += qom*I*k*(fld->u[i])*(fld->xx[i-istart]);
-				fld->dtv[i-istart] += qom*I*k*(fld->v[i])*(fld->xx[i-istart]);
-				fld->dtsig[i-istart] += qom*I*k*(fld->sig[i])*(fld->xx[i-istart]);
+				fld->dtu[i-istart] += qom*(fld->dyu[i])*(fld->xx[i-istart]);
+				fld->dtv[i-istart] += qom*(fld->dyv[i])*(fld->xx[i-istart]);
+				fld->dtsig[i-istart] += qom*(fld->dysig[i])*(fld->xx[i-istart]);
 			}
 			else {
 				fld->dtu[i-istart] = 0;
