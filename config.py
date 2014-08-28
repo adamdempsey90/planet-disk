@@ -1,8 +1,20 @@
 #!/usr/bin/python
 
+from sys import argv
 from subprocess import call
 
-with open("inputs/params.opt","r") as f:
+try:
+	inputdir = str(argv[1])
+except IndexError:
+	print 'No input directory specified. Assuming inputs/'
+	inputdir = 'inputs/'
+	
+if inputdir[-1] != '/':
+	inputdir += '/'
+inputdir += 'params.opt'	
+print 'Reading options from '+inputdir
+
+with open(inputdir,"r") as f:
 	lines = f.readlines()
 
 defines = [x.split('+')[-1].split('\n')[0] for x in lines if x.split() != [] and '#' not in x]	

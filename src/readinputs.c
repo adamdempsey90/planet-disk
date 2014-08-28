@@ -1,12 +1,16 @@
 #include "planetdisk.h" 
 
-void read_input(Field *fld) {
+void read_input(char *inputdir, Field *fld) {
 	FILE *f;
-	char garbage[100], outdir[100];
+	char garbage[100], outdir[100], ifname[100];
 	double h,Lx,Ly,xs,Mp,nu,q,omega,sig0,t0,tau,endt,tol;
 	int numf;
 	
-	f=fopen("inputs/params.in","r");
+	size_t len = strlen(inputdir);
+	if (inputdir[len-1] != '/') inputdir[len] = '/';
+	strcpy(ifname,inputdir);
+	strcat(ifname,"params.in");
+	f=fopen(ifname,"r");
 	if (f==NULL) printf("\n\nERROR Can't Find Input File!\n\n");
 	fgets(garbage,sizeof(garbage),f);
 	fscanf(f,"Nx = %d \n",&Nx);

@@ -3,6 +3,7 @@
 
 int main (int argc, char *argv[]) {
 	int i;
+	char inputdir[100];
 	clock_t tic, toc;
 	
 	MPI_Init(&argc, &argv);
@@ -21,10 +22,13 @@ int main (int argc, char *argv[]) {
 	
 	init_derivs();	
 	
-	MPI_Printf("Reading Inputs...\n");
 	
-	if (rank==0) read_input(fld);
-
+	if (rank==0) {
+		if (argc!=1) strcpy(inputdir,argv[1]);
+		else strcpy(inputdir,"inputs/");
+		printf("Reading Inputs from %s...\n",inputdir);
+		read_input(inputdir,fld);
+	}
 	MPI_Printf("Broadcasting Parameters...\n");
 	MPI_Bcast(fld->Params,sizeof(Parameters),MPI_BYTE,0,MPI_COMM_WORLD);
 	MPI_Bcast(Nxproc,np,MPI_INT,0,MPI_COMM_WORLD);
