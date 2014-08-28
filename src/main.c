@@ -9,11 +9,8 @@ int main (int argc, char *argv[]) {
 	MPI_Comm_size(MPI_COMM_WORLD,&np);
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	Nxproc = (int *)malloc(sizeof(int)*np);
-	init_output();
 	MPI_Printf("Welcome to the planet disk code...\n");
-	MPI_Printf("Code compiled with...\n");
-	
-	if (rank==0) output_defines();
+
 
 	Field *fld = (Field *)malloc(sizeof(Field));
 	fld->Params = (Parameters *)malloc(sizeof(Parameters));
@@ -26,6 +23,7 @@ int main (int argc, char *argv[]) {
 	MPI_Printf("Reading Inputs...\n");
 	
 	if (rank==0) read_input(fld);
+
 	MPI_Printf("Broadcasting Parameters...\n");
 	MPI_Bcast(fld->Params,sizeof(Parameters),MPI_BYTE,0,MPI_COMM_WORLD);
 	MPI_Bcast(Nxproc,np,MPI_INT,0,MPI_COMM_WORLD);
@@ -33,7 +31,15 @@ int main (int argc, char *argv[]) {
 	fld->Params->Nx=Nxproc[rank];
 	Nx = fld->Params->Nx;
 	Ny = fld->Params->Ny;
-//	printf("Proc %d working with %d points in x\n",rank,Nx);
+	
+	init_output(fld->Params->outdir);
+	
+	MPI_Printf("Code compiled with...\n");
+	if (rank==0) {
+		output_defines(fld->Params->outdir);
+		output_params(fld);
+	}
+	printf("%d %s\n", rank, fld->Params->outdir);
   	  
 	MPI_Printf("Initializing data structures...\n");
 

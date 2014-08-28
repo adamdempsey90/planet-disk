@@ -2,7 +2,7 @@
 
 void read_input(Field *fld) {
 	FILE *f;
-	char garbage[100];
+	char garbage[100], outdir[100];
 	double h,Lx,Ly,xs,Mp,nu,q,omega,sig0,t0,tau,endt,tol;
 	int numf;
 	
@@ -26,7 +26,8 @@ void read_input(Field *fld) {
 	fscanf(f,"endt =  %lg \n",&endt);
 	fscanf(f,"numf =  %d \n",&numf);
 	fscanf(f,"tol =  %lg \n",&tol);
-	
+	fscanf(f,"outputdir = %s \n",outdir);
+		
 	fclose(f);
 	
 	fld->Params->Nx = Nx;
@@ -47,7 +48,10 @@ void read_input(Field *fld) {
 	fld->Params->numf = numf;	
 	fld->Params->tol = tol;		
   	fld->Params->dx = (fld->Params->Lx/Nx);
-
+  	strcpy(fld->Params->outdir,outdir);
+   
+  	mkdir(outdir,0777);
+	
   	MPI_Printf("Input Parameters \n \
   	 \t Nx = %d\n \
   	 \t Ny = %d\n \
@@ -66,38 +70,40 @@ void read_input(Field *fld) {
   	 \t tau =  %lg\n \
   	 \t endt =  %lg\n \
   	 \t numf =  %d\n \
-  	 \t tol =  %lg\n", 
+  	 \t tol =  %lg\n \
+  	 \t outputdir = %s\n", 
   	  fld->Params->Nx, fld->Params->Ny, fld->Params->Lx, fld->Params->Ly, fld->Params->dx, fld->Params->xs, fld->Params->h, 
   	  fld->Params->Mp, fld->Params->nu, fld->Params->q, fld->Params->omega, fld->Params->sig0,
-  	  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf,fld->Params->tol);
+  	  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf,fld->Params->tol,fld->Params->outdir);
   
-  	if (rank==0) {
-		f = fopen("outputs/params.txt","a");
-		fprintf(f,"Input Parameters: \n \
-		Nx = %d\n \
-		Ny = %d\n \
-		Lx = %lg\n \
-		Ly =  %lg\n \
-		dx = %lg\n \
-		xsoft =  %lg\n \
-		h =  %lg\n \
-		Mp =  %lg\n \
-		nu =  %lg\n \
-		q =  %lg\n \
-		omega =  %lg\n \
-		sig0 = %lg\n \
-		Time Parameters \n \
-		t0 =  %lg\n \
-		tau =  %lg\n \
-		endt =  %lg\n \
-		numf =  %d\n \
-		tol =  %lg\n", 
-			  fld->Params->Nx, fld->Params->Ny, fld->Params->Lx, fld->Params->Ly, fld->Params->dx, fld->Params->xs, fld->Params->h, 
-			  fld->Params->Mp, fld->Params->nu, fld->Params->q, fld->Params->omega, fld->Params->sig0,
-			  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf,fld->Params->tol);
-		fclose(f);
-	}
-	
+//   	if (rank==0) {
+// 		f = fopen("outputs/params.txt","a");
+// 		fprintf(f,"Input Parameters: \n \
+// 		Nx = %d\n \
+// 		Ny = %d\n \
+// 		Lx = %lg\n \
+// 		Ly =  %lg\n \
+// 		dx = %lg\n \
+// 		xsoft =  %lg\n \
+// 		h =  %lg\n \
+// 		Mp =  %lg\n \
+// 		nu =  %lg\n \
+// 		q =  %lg\n \
+// 		omega =  %lg\n \
+// 		sig0 = %lg\n \
+// 		Time Parameters \n \
+// 		t0 =  %lg\n \
+// 		tau =  %lg\n \
+// 		endt =  %lg\n \
+// 		numf =  %d\n \
+// 		tol =  %lg\n \
+// 		outputdir = %s\n", 
+// 			  fld->Params->Nx, fld->Params->Ny, fld->Params->Lx, fld->Params->Ly, fld->Params->dx, fld->Params->xs, fld->Params->h, 
+// 			  fld->Params->Mp, fld->Params->nu, fld->Params->q, fld->Params->omega, fld->Params->sig0,
+// 			  fld->Params->t0, fld->Params->tau,   fld->Params->endt, fld->Params->numf,fld->Params->tol,fld->Params->outdir);
+// 		fclose(f);
+// 	}
+// 	
 	
 /* Send out data to rest of processors */
 	
@@ -107,7 +113,7 @@ void read_input(Field *fld) {
 		Nxproc[np-1] += Nx % np;
 	}
 	
-	
+
 	return;
 
 

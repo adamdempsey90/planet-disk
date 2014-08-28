@@ -16,3 +16,4 @@ tau = 10
 endt = 100
 numf = 100
 tol = 1e-8
+outputdir = outputs/m1

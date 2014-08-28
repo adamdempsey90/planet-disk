@@ -55,6 +55,7 @@ typedef struct Parameters {
 	double tol;
 	int numf;
 	char restartfname[50];
+	char outdir[100];
 	
 } Parameters;
 
@@ -103,7 +104,6 @@ int np,rank;
 double kmax;
 Derivative deriv; 
 
-
 void func(double t, double complex *y, double complex *f,Field *fld);
 int rk45_step_apply(Field *fld, double *t, double *h);
 void fld_2_y(Field *fld, double complex *q);
@@ -141,10 +141,11 @@ void output_pi(Field *fld);
 void transform(Field *fld);
 void output_reals(Field *fld);
 void wavekillbc(Field *fld,double dt);
-void output_defines(void);
+void output_defines(char *dir);
 void restart(Field *fld);
 void shear_advection(Field *fld,double dt);
 void init_buff(void);
 void free_buff(void);
-void init_output(void);
+void init_output(char *dir);
+void output_params(Field *fld);
 void set_pi_bc(Field *fld);
