@@ -168,7 +168,7 @@ def plotfld(fld,q,ilist,xlims=(0,0),scale=1):
 		title(tstr)
 	return
 
-def animate(q,k,t,np,dt=1,dir='',scale=True):
+def animate(q,k,t,np,dt=1,xlims=(0,0),dir='',scale=True):
 	
 	
 	temp = Field(t[0],np,dir=dir)
@@ -186,6 +186,7 @@ def animate(q,k,t,np,dt=1,dir='',scale=True):
 		else:
 			print 'Not a valid variable name'
 			return
+	
 	
 	fig=figure(figsize=(15,10))
 	if scale:
@@ -209,13 +210,14 @@ def animate(q,k,t,np,dt=1,dir='',scale=True):
 	for i in t:
 		clf()
 		if k==0:
-			plot(x,real(dat[:,i]))
-			
+			plot(x,real(dat[:,i]))			
 		else:
 			plot(x,real(dat[:,i]),x,imag(dat[:,i]))
-
+	
 		if scale:
 			ylim((qmin,qmax))
+		if xlims[0]!=0 and xlims[1]!=0:
+			xlim(xlims)
 		title('t$\Omega$='+str(i*dt))
 		
 		fig.canvas.draw()

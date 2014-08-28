@@ -4,7 +4,7 @@ double *lbuff, *rbuff;
 
 void set_bc(Field *fld) {
 /* Set the boundary conditions for the right boundary */
-	int i,indx;
+	int i,j;
 //	double sig0 = (fld->Params->sig0);
 	
 	MPI_Status status;
@@ -13,15 +13,27 @@ void set_bc(Field *fld) {
 
 	if (np == 1) {
 		for(i=0;i<NG;i++) {
-			indx = NC*(2*NG-(1+i));
-			memcpy(&(fld->u[i*NC]),&(fld->u[indx]),sizeof(double complex)*NC);
-			memcpy(&(fld->v[i*NC]),&(fld->v[indx]),sizeof(double complex)*NC);
-			memcpy(&(fld->sig[i*NC]),&(fld->sig[indx]),sizeof(double complex)*NC);
+#ifndef EXTRAP
+			j = NC*(2*NG-(1+i));
+			memcpy(&(fld->u[i*NC]),&(fld->u[j]),sizeof(double complex)*NC);
+			memcpy(&(fld->v[i*NC]),&(fld->v[j]),sizeof(double complex)*NC);
+			memcpy(&(fld->sig[i*NC]),&(fld->sig[j]),sizeof(double complex)*NC);
 
-			indx = NC*(2*(NG+Nx)-(i+Nx+NG+1));
-			memcpy(&(fld->u[(i+Nx+NG)*NC]),&(fld->u[indx]),sizeof(double complex)*NC);
-			memcpy(&(fld->v[(i+Nx+NG)*NC]),&(fld->v[indx]),sizeof(double complex)*NC);
-			memcpy(&(fld->sig[(i+Nx+NG)*NC]),&(fld->sig[indx]),sizeof(double complex)*NC);
+			j = NC*(2*(NG+Nx)-(i+Nx+NG+1));
+			memcpy(&(fld->u[(i+Nx+NG)*NC]),&(fld->u[j]),sizeof(double complex)*NC);
+			memcpy(&(fld->v[(i+Nx+NG)*NC]),&(fld->v[j]),sizeof(double complex)*NC);
+			memcpy(&(fld->sig[(i+Nx+NG)*NC]),&(fld->sig[j]),sizeof(double complex)*NC);
+#else 
+			for(j=0;j<NC;j++) {
+				fld->u[CINDX] = fld->u[j+NC*NG];
+				fld->v[CINDX] = fld->v[j+NC*NG];
+				fld->sig[CINDX] = fld->sig[j+NC*NG];
+
+				fld->u[j+NC*(i+Nx+NG)] = fld->u[j+NC*(NG+Nx-1)];
+				fld->v[j+NC*(i+Nx+NG)] = fld->v[j+NC*(NG+Nx-1)];
+				fld->sig[j+NC*(i+Nx+NG)] = fld->sig[j+NC*(NG+Nx-1)];
+			}
+#endif
 		}
 	}
 	else {
@@ -42,10 +54,18 @@ void set_bc(Field *fld) {
 /* Set left b.c for proc 0 */	
 	
 		for(i=0;i<NG;i++) {
-			indx = NC*(2*NG-(1+i));
-			memcpy(&(fld->u[i*NC]),&(fld->u[indx]),sizeof(double complex)*NC);
-			memcpy(&(fld->v[i*NC]),&(fld->v[indx]),sizeof(double complex)*NC);
-			memcpy(&(fld->sig[i*NC]),&(fld->sig[indx]),sizeof(double complex)*NC);
+#ifndef EXTRAP
+			j = NC*(2*NG-(1+i));
+			memcpy(&(fld->u[i*NC]),&(fld->u[j]),sizeof(double complex)*NC);
+			memcpy(&(fld->v[i*NC]),&(fld->v[j]),sizeof(double complex)*NC);
+			memcpy(&(fld->sig[i*NC]),&(fld->sig[j]),sizeof(double complex)*NC);
+#else
+			for(j=0;j<NC;j++) {
+				fld->u[CINDX] = fld->u[j+NC*NG];
+				fld->v[CINDX] = fld->v[j+NC*NG];
+				fld->sig[CINDX] = fld->sig[j+NC*NG];
+			}
+#endif
 		}
 	}
 	
@@ -69,11 +89,20 @@ void set_bc(Field *fld) {
 
 /* Set right b.c for proc np-1 */
 
+
 		for(i=0;i<NG;i++) {
-			indx = NC*(2*(NG+Nx)-(i+Nx+NG+1));
-			memcpy(&(fld->u[(i+Nx+NG)*NC]),&(fld->u[indx]),sizeof(double complex)*NC);
-			memcpy(&(fld->v[(i+Nx+NG)*NC]),&(fld->v[indx]),sizeof(double complex)*NC);
-			memcpy(&(fld->sig[(i+Nx+NG)*NC]),&(fld->sig[indx]),sizeof(double complex)*NC);
+#ifndef EXTRAP
+			j = NC*(2*(NG+Nx)-(i+Nx+NG+1));
+			memcpy(&(fld->u[(i+Nx+NG)*NC]),&(fld->u[j]),sizeof(double complex)*NC);
+			memcpy(&(fld->v[(i+Nx+NG)*NC]),&(fld->v[j]),sizeof(double complex)*NC);
+			memcpy(&(fld->sig[(i+Nx+NG)*NC]),&(fld->sig[j]),sizeof(double complex)*NC);
+#else
+			for(j=0;j<NC;j++) {
+				fld->u[j+NC*(i+Nx+NG)] = fld->u[j+NC*(NG+Nx-1)];
+				fld->v[j+NC*(i+Nx+NG)] = fld->v[j+NC*(NG+Nx-1)];
+				fld->sig[j+NC*(i+Nx+NG)] = fld->sig[j+NC*(NG+Nx-1)];
+			}
+#endif
 		}	
 	}
 	else {
@@ -254,35 +283,32 @@ void wavekillbc(Field *fld,double dt)
 {
 	int i;
 	double R,tau,x;
-	double x_inf = -(fld->Params->Lx)*.5*.95;
-	double x_sup = (fld->Params->Lx)*.5*0.95;
-// #ifdef OPENMP 
-// 	#pragma omp parallel private(i,x,R,tau) shared(fld) num_threads(NUMTHREADS)
-// 	#pragma omp for schedule(static)
-// #endif	
+	double x_inf = -(fld->Params->Lx)*.5*0.8;
+	double x_sup = (fld->Params->Lx)*.5*0.8;
+
 	for(i=istart;i<iend;i++) {
-		x = fld->xx[i];
+		x = fld->xx[i-istart];
 		R=0;
 		if (x > x_sup) R = (x-x_sup)/(fld->x[Nx+NG-1] - x_sup);
 		if (x < x_inf) R = (x_inf - x)/(x_inf - fld->x[NG]);
 
 		R *= R;
-		tau = 2*M_PI/(30*fld->Params->omega);
+		tau = .1*(fld->k[1])/(fld->Params->omega);
 
 		if (R>0.0) {
 			tau /= R;
 			if (fld->kk[i-istart]==0) {
 #ifdef BACKEVOLVE	
-				fld->u[i] = (fld->u[i])/(1+dt);
-				fld->v[i] = (fld->v[i])/(1+dt);
+				fld->u[i] = (fld->u[i])/(1+dt/tau);
+				fld->v[i] = (fld->v[i])/(1+dt/tau);
 				fld->sig[i] = ((fld->sig[i])*tau + (fld->Params->sig0)*dt)/(dt+tau);
 #endif
 			}
 			else {
 #ifdef WAVEEVOLVE	
-					fld->u[i] = (fld->u[i])/(1+dt);
-					fld->v[i] = (fld->v[i])/(1+dt);
-					fld->sig[i]=(fld->sig[i])/(1+dt);
+					fld->u[i] = (fld->u[i])/(1+dt/tau);
+					fld->v[i] = (fld->v[i])/(1+dt/tau);
+					fld->sig[i]=(fld->sig[i])/(1+dt/tau);
 #endif
 			}
 		}

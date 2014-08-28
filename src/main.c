@@ -1,13 +1,14 @@
 #include "planetdisk.h"
+#include <time.h>
 
 int main (int argc, char *argv[]) {
 	int i;
-
-	
+	clock_t tic, toc;
 	
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD,&np);
 	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	if (rank==0)  tic= clock();
 	Nxproc = (int *)malloc(sizeof(int)*np);
 	MPI_Printf("Welcome to the planet disk code...\n");
 
@@ -107,7 +108,7 @@ int main (int argc, char *argv[]) {
    
 
 #ifdef WAVEKILLBC
-	wavekillbc(fld,dt);
+	if (rank==0 || rank==np-1)	wavekillbc(fld,dt);
 #endif
      
       
@@ -119,11 +120,17 @@ int main (int argc, char *argv[]) {
      }
     }
 
-  free(Nxproc);
-  free_field(fld);
-  free_buff();
-  fft_free(); 
-  free_rk45();
-  int mpi_status = MPI_Finalize();
-  return mpi_status;
+
+  
+ 	free(Nxproc);
+  	free_field(fld);
+  	free_buff();
+  	fft_free(); 
+  	free_rk45();
+  
+	if (rank==0) toc = clock();
+	MPI_Printf("Elapsed time: %f seconds\n", (double)(toc - tic) / CLOCKS_PER_SEC);	
+	MPI_Printf("# steps per second: %f\n", numstep /((double)(toc - tic) / CLOCKS_PER_SEC));
+  	int mpi_status = MPI_Finalize();
+ 	return mpi_status;
 }

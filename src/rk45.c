@@ -53,7 +53,7 @@ int new_h(double complex *yerr, double *h, double tol) {
 	}
 	else if (eps < .5) {
 		r = SAFETY*pow(eps,-1.0/(rk_order+1.0));
-		if (r > 5) r=5;
+//		if (r > 5) r=5;
 		if (r < 1) r=1;
 		*h *= r;
 //	printf("%d\trel_eps = %lg,  r = %lg,   new h = %.12e\n",rank,eps,r,*h);

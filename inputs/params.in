@@ -1,5 +1,5 @@
 # Input Parameters
-Nx = 2048
+Nx = 1024
 Ny = 32
 Lx = 40.0
 Ly = 30.0
@@ -13,7 +13,7 @@ sig0 = 1.0
 # Time Parameters
 t0 = 0
 tau = 10
-endt = 100
-numf = 100
+endt = 1000
+numf = 200
 tol = 1e-8
-outputdir = outputs/m1
+outputdir = outputs/

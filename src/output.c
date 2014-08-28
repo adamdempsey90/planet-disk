@@ -377,7 +377,6 @@ void init_output(char *dir) {
 	if (dir[len-1] != '/') dir[len] = '/';
 	sprintf(idstr,"id%d/",rank);
 	strcat(dir,idstr);
-	printf("%d %s\n",rank,dir);
 	mkdir(dir,0777);
 
 	return;
