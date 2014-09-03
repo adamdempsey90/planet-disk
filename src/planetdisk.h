@@ -99,6 +99,7 @@ typedef struct Derivative {
 		
 int Nx, Ny, Nmax, outnum, dxoutnum, func_calls, dtoutnum,pioutnum;
 int numstep;
+double avgdt;
 int *Nxproc;
 int np,rank;
 double kmax;
@@ -149,3 +150,4 @@ void free_buff(void);
 void init_output(char *dir);
 void output_params(Field *fld);
 void set_pi_bc(Field *fld);
+void print_time(double t);

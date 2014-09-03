@@ -68,3 +68,25 @@ void calc_deriv(double complex *in, double complex *dxout, double complex *dyout
 		
 }
 
+void print_time(double t) {
+	int hr, min;	
+	hr = (int)floor(t/(60.*60.)); 
+	t -= hr*60*60;	
+	min = (int)floor(t/60);
+	t -= min*60;
+	
+	
+	if (hr==0) {
+		if (min == 0) {
+			printf("Total Runtime:\t%.3lgs\n",t);
+			
+		}
+		else {
+			printf("Total Runtime:\t%dm%.3lgs\n",min,t);	
+		}
+	}
+	else {
+		printf("Total Runtime:\t%dh%dm%.3lgs\n",hr,min,t);
+	}
+	return;
+}

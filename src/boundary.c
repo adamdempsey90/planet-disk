@@ -282,10 +282,11 @@ void set_pi_bc(Field *fld) {
 void wavekillbc(Field *fld,double dt)
 {
 	int i;
-	double R,tau,x;
-	double x_inf = -(fld->Params->Lx)*.5*0.8;
-	double x_sup = (fld->Params->Lx)*.5*0.8;
-
+	double R,tau,x,dtdtau;
+	const double x_inf = -(fld->Params->Lx)*.5*0.8;
+	const double x_sup = (fld->Params->Lx)*.5*0.8;
+	const double tau0 = .1*(fld->k[1])/(fld->Params->omega);
+	
 	for(i=istart;i<iend;i++) {
 		x = fld->xx[i-istart];
 		R=0;
@@ -293,15 +294,16 @@ void wavekillbc(Field *fld,double dt)
 		if (x < x_inf) R = (x_inf - x)/(x_inf - fld->x[NG]);
 
 		R *= R;
-		tau = .1*(fld->k[1])/(fld->Params->omega);
+		tau = tau0;
 
 		if (R>0.0) {
-			tau /= R;
+			tau /= R; 
+			dtdtau = dt/tau;
 			if (fld->kk[i-istart]==0) {
 #ifdef BACKEVOLVE	
-				fld->u[i] = (fld->u[i])/(1+dt/tau);
-				fld->v[i] = (fld->v[i])/(1+dt/tau);
-				fld->sig[i] = ((fld->sig[i])*tau + (fld->Params->sig0)*dt)/(dt+tau);
+				fld->u[i] = (fld->u[i])/(1+dtdtau );
+				fld->v[i] = (fld->v[i])/(1+dtdtau );
+				fld->sig[i] = ((fld->sig[i]) + (fld->Params->sig0)*dtdtau )/(1+dtdtau);
 #endif
 			}
 			else {

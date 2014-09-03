@@ -1,5 +1,8 @@
 #include "planetdisk.h"
 #include <time.h>
+#include <unistd.h>
+
+int check_termination(void);
 
 int main (int argc, char *argv[]) {
 	int i;
@@ -12,7 +15,7 @@ int main (int argc, char *argv[]) {
 	if (rank==0)  tic= clock();
 	Nxproc = (int *)malloc(sizeof(int)*np);
 	MPI_Printf("Welcome to the planet disk code...\n");
-
+	MPI_Printf("To terminate run, touch STOP in execution directory...\n");
 
 	Field *fld = (Field *)malloc(sizeof(Field));
 	fld->Params = (Parameters *)malloc(sizeof(Parameters));
@@ -91,7 +94,8 @@ int main (int argc, char *argv[]) {
 	MPI_Printf("Starting the Time Loop...\n");
 	MPI_Printf("\t Starting Time = %lg \t Ending Time = %lg \n",t,t1);
 	
-	numstep=0;
+	int term_status=0;
+	numstep=0; avgdt=0;
   while (t < t1)
     {
       
@@ -104,7 +108,7 @@ int main (int argc, char *argv[]) {
         break;
     }
     dt = t-dt;
-    
+    avgdt += dt;
 #ifdef SHEARSPLIT
 	shear_advection(fld,dt);
 #endif
@@ -122,9 +126,19 @@ int main (int argc, char *argv[]) {
 		output(fld);
       	i++;
      }
+     
+  
+  	term_status = check_termination();
+     if (term_status==-1) {
+    	 	MPI_Printf("Detected STOP file...\n");
+    	 	MPI_Printf("Outputting final state and terminating run...\n");
+    	 	output(fld);
+    	 	break;
+     }
     }
-
-
+	
+	MPI_Barrier(MPI_COMM_WORLD);
+	if (rank == 0) remove("STOP");
   
  	free(Nxproc);
   	free_field(fld);
@@ -132,9 +146,13 @@ int main (int argc, char *argv[]) {
   	fft_free(); 
   	free_rk45();
   
-	if (rank==0) toc = clock();
-	MPI_Printf("Elapsed time: %f seconds\n", (double)(toc - tic) / CLOCKS_PER_SEC);	
+	if (rank==0) {toc = clock(); print_time( (double)(toc - tic) / CLOCKS_PER_SEC );}
 	MPI_Printf("# steps per second: %f\n", numstep /((double)(toc - tic) / CLOCKS_PER_SEC));
+	MPI_Printf("Average time step: %.2e\n", avgdt/numstep);
   	int mpi_status = MPI_Finalize();
  	return mpi_status;
+}
+int check_termination(void) {
+	if( access( "STOP", F_OK ) != -1 ) return -1;
+	else return 0;
 }

@@ -134,8 +134,8 @@ def plotvortens(fld,tstr=''):
 	
 	return vortens,vortensbar
 	
-def plotfld(fld,q,ilist,xlims=(0,0),scale=1):
-	
+def plotfld(fld,q,ilist,xlims=(0,0),scale=1,conj_flag=False):
+	print xlims[0],xlims[1]
 	
 	x = fld.x
 	if q=='u':
@@ -150,11 +150,12 @@ def plotfld(fld,q,ilist,xlims=(0,0),scale=1):
 	else:
 		print "Not valid variable name"
 		return
-
+	if conj_flag:
+		dat = conj(dat)
 	for i in ilist:
 		tstr = 'mode #'+str(i)+', k = ' + str(fld.k[i])
 		figure()
-		if xlims[0]!=0 and xlims[1]!=0:
+		if ~(xlims[0]==0 and xlims[1]==0):
 			xlim(xlims)
 		if i==0:
 			plot(x,scale*real(dat[:,i]))
@@ -168,7 +169,7 @@ def plotfld(fld,q,ilist,xlims=(0,0),scale=1):
 		title(tstr)
 	return
 
-def animate(q,k,t,np,dt=1,xlims=(0,0),dir='',scale=True):
+def animate(q,k,t,np,dt=1,xlims=(0,0),dir='',scale=True,norm=1,conj_flag=False):
 	
 	
 	temp = Field(t[0],np,dir=dir)
@@ -177,17 +178,19 @@ def animate(q,k,t,np,dt=1,xlims=(0,0),dir='',scale=True):
 	dat= zeros((Nx,len(t)),dtype='complex')
 	for i in t:
 		if q=='u':
-			dat[:,i] = Field(i,np,dir=dir).u[:,k]
+			dat[:,i] = norm*Field(i,np,dir=dir).u[:,k]
 		elif q=='v':
-			dat[:,i] = Field(i,np,dir=dir).v[:,k]
+			dat[:,i] = norm*Field(i,np,dir=dir).v[:,k]
 		
 		elif q=='sig':
-			dat[:,i] = Field(i,np,dir=dir).sig[:,k]
+			dat[:,i] = norm*Field(i,np,dir=dir).sig[:,k]
 		else:
 			print 'Not a valid variable name'
 			return
 	
-	
+	if conj_flag:
+		dat = conj(dat)
+		
 	fig=figure(figsize=(15,10))
 	if scale:
 		if k==0:
@@ -216,21 +219,22 @@ def animate(q,k,t,np,dt=1,xlims=(0,0),dir='',scale=True):
 	
 		if scale:
 			ylim((qmin,qmax))
-		if xlims[0]!=0 and xlims[1]!=0:
+		if ~(xlims[0]==0 and xlims[1]==0):
 			xlim(xlims)
-		title('t$\Omega$='+str(i*dt))
+		title('t$\Omega$='+str(i*dt)+'\t k='+str(k*2*pi/temp.Ly))
 		
 		fig.canvas.draw()
 	return
 	
 	
-def animate_real(q,t,Nx,Ny,dt=1,dir='',logscale=False):
-	
+def animate_real(q,t,np,dt=1,dir='',logscale=False):
+	temp = Field(t[0],np,dir=dir)
+	Nx=temp.Nx; Ny = temp.Ny; 
+	NC=temp.NC
+	x,y = meshgrid(temp.x,temp.y)
 	dat= zeros((Nx,Ny,len(t)))
-	fld = Field(t[0],Nx,Ny,dir=dir)
-	x,y = meshgrid(fld.y,fld.x)
 	for i in t:
-		fld = Field(i,Nx,Ny,dir=dir)
+		fld = Field(i,np,dir=dir)
 		vx,vy,dens,_,_ = realspace(fld)
 		if q=='vx':
 			dat[:,:,i] = vx
@@ -252,15 +256,17 @@ def animate_real(q,t,Nx,Ny,dt=1,dir='',logscale=False):
 	for i in t:
 		clf()
 		if logscale:
-			imshow(log10(dat[:,:,i]).transpose(),aspect='auto',vmin=log10(d_min),vmax=log10(d_max))
+			imshow(log10(dat[:,:,i]).transpose(),aspect='auto',vmin=log10(d_min),vmax=log10(d_max), \
+			extent=(temp.x[0],temp.x[-1],temp.y[0],temp.y[-1]))
 		else:
-			imshow(dat[:,:,i].transpose(),aspect='auto',vmin=d_min,vmax=d_max)
+			imshow(dat[:,:,i].transpose(),aspect='auto',vmin=d_min,vmax=d_max, \
+			extent=(temp.x[0],temp.x[-1],temp.y[0],temp.y[-1]))
 		colorbar()
 		title(tstr + 't$\Omega$='+str(i*dt))
 		fig.canvas.draw()
-		
-		
+
 	return
+
 def plotreal(fld,tstr=''):
 	vx,vy,dens,x,y = realspace(fld)
 	figure()

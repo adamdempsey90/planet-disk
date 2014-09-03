@@ -1,10 +1,11 @@
 #include "planetdisk.h"
 
+static const double twoth = (2.0/3.0);
+ 
 void visc_tens(Field *fld) {
 /* Calculates the stress tensor including viscosity and pressure */
 
 	int i;
-	double twoth = (2.0/3.0);
 	double qom = (fld->Params->q)*(fld->Params->omega);
 	double c = (fld->Params->c)*(fld->Params->c);
 	double nu = (fld->Params->nu);
@@ -41,18 +42,25 @@ void visc_tens(Field *fld) {
 
 void add_visc(Field *fld) {
 
-	visc_tens(fld);
+	if (fld->Params->nu != 0) {
+		visc_tens(fld);
 	
-/* Calculate div(Pi) */	
-	calc_deriv(fld->Tens->Pixx,fld->Tens->divPix,NULL,fld->Params->dx,fld->kk);
-	calc_deriv(fld->Tens->Pixy,fld->Tens->divPiy,fld->Tens->divPix,fld->Params->dx,fld->kk);
-	calc_deriv(fld->Tens->Piyy,NULL,fld->Tens->divPiy,fld->Params->dx,fld->kk);
+	/* Calculate div(Pi) */	
+		calc_deriv(fld->Tens->Pixx,fld->Tens->divPix,NULL,fld->Params->dx,fld->kk);
+		calc_deriv(fld->Tens->Pixy,fld->Tens->divPiy,fld->Tens->divPix,fld->Params->dx,fld->kk);
+		calc_deriv(fld->Tens->Piyy,NULL,fld->Tens->divPiy,fld->Params->dx,fld->kk);
 	
 
-/* Convolve with 1/Sigma */
+	/* Convolve with 1/Sigma */
 
- 	convolve_inv(&fld->sig[istart],&fld->Tens->divPix[istart],fld->dtu,1);
- 	convolve_inv(&fld->sig[istart],&fld->Tens->divPiy[istart],fld->dtv,1);
-	
+		convolve_inv(&fld->sig[istart],&fld->Tens->divPix[istart],fld->dtu,1);
+		convolve_inv(&fld->sig[istart],&fld->Tens->divPiy[istart],fld->dtv,1);
+	}
+	else {
+		convolve_inv(&fld->sig[istart],&fld->dxsig[istart],
+							fld->dtu,-(fld->Params->c)*(fld->Params->c));	
+		convolve_inv(&fld->sig[istart],&fld->dysig[istart],
+							fld->dtv,-(fld->Params->c)*(fld->Params->c));
+	}
 	return;
 }

@@ -24,11 +24,8 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 
 	int i,j;
 
+#ifndef LINEAR
 /* De-alias with 2/3 truncation rule */	
-#ifdef OPENMP 
-	#pragma omp parallel private(i) shared(q1,q2,wc1,wc2,mask) num_threads(NUMTHREADS)
-	#pragma omp for schedule(static)
-#endif	
 	for(i=0;i<NC*Nx;i++) {
 		wc1[i] = q1[i]*mask[i]*mult; 
 		wc2[i] = q2[i]*mask[i];
@@ -39,10 +36,7 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 	fftw_execute(c2r2);
 
 /* Form product in real space */
-#ifdef OPENMP 
-	#pragma omp parallel private(i) shared(wr1,wr2,wr3) num_threads(NUMTHREADS)
-	#pragma omp for schedule(static)
-#endif	
+
 	for(i=0;i<Nx*NR;i++) wr3[i] = wr1[i]*wr2[i];
 
 /* FFT back to complex space */
@@ -55,7 +49,16 @@ void convolve(double complex *q1, double complex *q2, double complex *res, doubl
 			res[CINDX] += wc3[CINDX]/Ny;
 		}
 	}	
-
+#else
+/* No interaction b/w modes except with zero mode */
+	for(i=0;i<Nx;i++) {
+		res[i*NC] += q1[i*NC]*q2[i*NC]*mult;
+		for(j=1;j<NC;j++) {
+			res[i*NC] += 2*creal(conj(q1[CINDX])*q2[CINDX]*mult);
+			res[CINDX] += (q1[i*NC]*q2[CINDX] + q1[CINDX]*q2[i*NC])*mult;
+		}
+	}
+#endif
 	return;
 }
 void convolve_inv(double complex *q1, double complex *q2, double complex *res, double complex mult) {
@@ -68,11 +71,9 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 
 	int i,j;
 
+#ifndef LINEAR
 /* De-alias with 2/3 truncation rule */	
-#ifdef OPENMP 
-	#pragma omp parallel private(i) shared(q1,q2,wc1,wc2,mask) num_threads(NUMTHREADS)
-	#pragma omp for schedule(static)
-#endif	
+	
 	for(i=0;i<Nx*NC;i++) {
 		wc1[i] = mask[i]*q1[i]; 
 		wc2[i] = q2[i]*mask[i]*mult;
@@ -84,10 +85,7 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 	fftw_execute(c2r2);
 
 /* Form product in real space */
-#ifdef OPENMP 
-	#pragma omp parallel private(i,j) shared(wr3,wr2,wr1) num_threads(NUMTHREADS)
-	#pragma omp for schedule(static)
-#endif	
+
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<NR;j++) {
 			if(wr1[RINDX]!=0) wr3[RINDX] = wr2[RINDX]/wr1[RINDX];
@@ -104,7 +102,18 @@ void convolve_inv(double complex *q1, double complex *q2, double complex *res, d
 			res[CINDX] += wc3[CINDX]/Ny;
 		}
 	}	
+#else
+/* Expand out to second order in q1 w.r.t zero mode q1 */
+	for(i=0;i<Nx;i++) {
+		res[i*NC] += mult*q2[i*NC]/q1[i*NC];
+		for(j=1;j<NC;j++) {
+			res[i*NC] += 2*creal(pow(q1[i*NC],-3.0)*(-q1[i*NC]*conj(q1[CINDX])*q2[CINDX]
+								+ conj(q1[CINDX])*q1[CINDX]*q2[i*NC])*mult);
+			res[CINDX] += pow(q1[i*NC],-2.0)*(q1[i*NC]*q2[CINDX]-q1[CINDX]*q2[i*NC])*mult;
+		}
+	}
 
+#endif
 	return;
 }
 
@@ -118,8 +127,11 @@ void init_fft(void) {
 	int istride=1, ostride=1;
 	int *inembed=NULL, *onembed=NULL;
 
+#ifdef LINEAR
+	Nmax = NC-1;
+#else
 	Nmax = floor(2./3*NC);
-	
+#endif	
 	wc1 = (double complex *)malloc(sizeof(double complex)*Nx*NC);
 	wr1 = (double *)wc1;
 	wc2 = (double complex *)malloc(sizeof(double complex)*Nx*NC);
