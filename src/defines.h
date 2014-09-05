@@ -1,3 +1,2 @@
 #define WAVEEVOLVE
 #define TENTHDERIV
-#define WAVEKILLBC

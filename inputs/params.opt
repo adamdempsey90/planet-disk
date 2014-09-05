@@ -44,7 +44,7 @@
 ## Boundary conditions
 
 #+EXTRAP
-+WAVEKILLBC
+#+WAVEKILLBC
 
 
 ## OpenMP parallization Specify # of threads  if OPENMP is flagged

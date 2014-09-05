@@ -423,5 +423,113 @@ def pspec(fld):
 	ylabel('$Re(u^* \sigma)$')
 	return u2,v2,sig2,uv,usig
 		
-		
+
+def amf(fld,nu,mp,xs):
+	vxbar = fld.u[:,0]
+	vybar = fld.v[:,0]
+	dbar = fld.sig[:,0]	
+	
+	x = fld.x
+	up = zeros(fld.u.shape)
+	vp = zeros(fld.v.shape)
+	sigp = zeros(fld.sig.shape)
+	
+	up[:,1:] = fld.u[:,1:]
+	vp[:,1:] = fld.v[:,1:]
+	sigp[:,1:] = fld.sig[:,1:] 
+	
+	(Nx,NC) = fld.u.shape
+	norm = fld.Ny
+	
+	
+
+	dxu,_ = gradient(fld.u,fld.dx,1)
+	dxv,_ = gradient(fld.v,fld.dx,1)
+	dxsig,_ = gradient(fld.sig,fld.dx,1)
+	
+	dyu = fld.u * 1j*fld.kk
+	dyv = fld.v * 1j*fld.kk
+	dysig = fld.sig * 1j*fld.kk
+	
+	dxvxbar = dxu[:,0]
+	dxvybar = dxv[:,0]
+	dxdbar = dxsig[:,0]
+	
+	dxu[:,0] = 0
+	dxv[:,0] = 0
+	dxsig[:,0] = 0
+	
+	Txy = nu*(dxv + dyu) 
+	Tyy = nu*(2*dyv - (2./3)*(dxu+dyv))
+	
+	rTxy = fft.irfft(Txy)
+	rTyy = fft.irfft(Tyy)
+	vxp = fft.irfft(up)
+	dxvxp = fft.irfft(dxu)
+	vyp = fft.irfft(vp)
+	dxvyp = fft.irfft(dxv)
+	dp  = fft.irfft(sigp)
+	dxdp = fft.irfft(dxsig)
+	
+	rPixy = -fft.irfft(fld.sig) + fft.irfft(fld.sig)*rTxy
+	rPiyy = -fft.irfft(fld.sig) + fft.irfft(fld.sig)*rTyy
+	
+	Pixy = fft.rfft(rPixy)/norm
+	Piyy = fft.rfft(rPiyy)/norm
+	
+	dxPixy,_ = gradient(Pixy,fld.dx,1)
+	dyPiyy = 1j*fld.kk*Piyy
+	
+	Pixybar = Pixy[:,0]
+	dxPixybar = dxPixy[:,0]
+	
+	divPip = dxPixy + dyPiyy
+	divPip[:,0] = 0
+	
+	rdivPip = fft.irfft(divPip)
+	
+	Twd = (dp*vxp).mean(axis=1)*(dxvybar+2) - dbar*(vxp*dxvyp).mean(axis=1) \
+			+ (dp*rdivPip).mean(axis=1) + dxPixybar*(dp*dp).mean(axis=1)/(dbar*dbar)
+
+	print Nx,NC
+# 	Twd = zeros(Nx)
+# 	for i in range(Nx):
+# 		Twd[i] = 0
+# 		for j in range(NC):
+# 			Twd[i] += 2*real(conj(sigp[i,j])*up[i,j]*(dxvybar[i]+2) - dbar[i]*conj(vxp[i,j])*dxvyp[i,j])
+
+	
+	Fp = dbar*(vxp*vyp).mean(axis=1) + vxbar*(dp*vyp).mean(axis=1) + (dp*vxp*vyp).mean(axis=1)
+	Fb = (dbar*vxbar + (dp*vxp).mean(axis=1))*(vybar+2*x) - Pixybar
+	dxFp = gradient(Fp,fld.x)
+	dxFb = gradient(Fb,fld.x)
+	
+	yy,xx = meshgrid(fld.y,fld.x)
+	Phi = -mp/sqrt(xs**2+xx**2+yy**2)
+	phi = fft.rfft(Phi)/norm
+	
+	phi[:,0] = 0
+	dyphi = 1j*fld.kk*phi
+	
+	dyPhip = fft.irfft(dyphi)
+	
+	Th = (dp*dyPhip).mean(axis=1)
+	
+	figure()
+	plot(x,Twd,x,-(dxFp+Th))
+	legend(('Twd','-LHS'))
+	xlabel('x')
+	title('Wave Steady State')
+	
+	figure()
+	plot(x,Twd,x,dxFb)
+	legend(('Twd','dxF'))
+	xlabel('x')
+	title('Viscous Steady State')
+	
+	return Twd,dxFp,Th, dxFb, Fp,Fb
+	
+	
+	
+	
 			
