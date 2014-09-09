@@ -1,8 +1,9 @@
 
 class Field():
 	def __init__(self,time,np,dir=''):
-				
-		vx,vy,dens,x,self.k,self.y,Nx,NC,splits = loadvars(np,time);
+		if dir[-1]!='/':
+			dir += '/'
+		vx,vy,dens,x,self.k,self.y,Nx,NC,splits = loadvars(np,time,dir);
 		self.Nx = Nx.sum()
 		self.NC = NC[0]
 		self.Ny = 2*self.NC-2
@@ -30,8 +31,86 @@ class Field():
  			self.kk[:,j] *= j
  		self.vort = dxv - 1j*self.kk*self.u	
 	
+	def plot(self,q,ilist,xlims=(0,0),scale=1,conj_flag=False):
+		x = self.x
+		if q=='u':
+			dat = self.u
+			ystr = 'u'
+		elif q=='v':	
+			dat = self.v
+			ystr = 'v'
+		elif q=='sig':
+			dat = self.sig
+			ystr = '$\Sigma$'
+		else:
+			print "Not valid variable name"
+			return
+		if conj_flag:
+			dat = conj(dat)
+		for i in ilist:
+			tstr = 'mode #'+str(i)+', k = ' + str(self.k[i])
+			figure()
+			if xlims!=(0,0):
+				xlim(xlims)
+			if i==0:
+				plot(x,scale*real(dat[:,i]))
+				ylabel('<'+ystr+'>')
+			else:
+				plot(x,scale*real(dat[:,i]),x,scale*imag(dat[:,i]))
+				ylabel(ystr)
+				legend(('Re('+ystr+')','Im('+ystr+')'))
+
+			xlabel('x')	
+			title(tstr)
+		return
+	def plotreal(self,xlims=(0,0),ylims=(0,0)):
+		vx,vy,dens,x,y = realspace(self)
+		vortens = (fft.irfft(self.vort)+2)/dens
 		
-def loadvars(np,time):
+		exarg = (-self.Lx/2,self.Lx/2,-self.Ly/2,self.Ly/2)
+		
+		
+		(endx,endy) = vx.shape
+		(startx,starty) = (0,0)
+		
+		if xlims!=(0,0):
+			temp = (self.x > xlims[0]) & (self.x < xlims[1])
+			startx = next(i for i,j in enumerate(temp) if j)
+			endx = next(len(temp)-i for i,j in enumerate(temp[::-1]) if j)
+			exarg = xlims + exarg[-2:]
+		
+		if ylims!=(0,0):
+			temp = (self.y > ylims[0]) & (self.y < ylims[1])
+			starty = next(i for i,j in enumerate(temp) if j)
+			endy = next(len(temp)-i for i,j in enumerate(temp[::-1]) if j)
+			exarg = exarg[:2] + ylims
+
+
+		print (startx,endx,starty,endy)
+		
+	
+		figure()
+		imshow(vx[startx:endx,starty:endy].transpose(), aspect='auto', origin='lower',extent=exarg,interpolation='bilinear')
+		colorbar()
+		title('vx'); xlabel('x'); ylabel('y')
+	
+		figure()
+		imshow(vy[startx:endx,starty:endy].transpose(), aspect='auto', origin='lower', extent=exarg,interpolation='bilinear')
+		colorbar()
+		title('vy'); xlabel('x'); ylabel('y')
+	
+		figure()
+		imshow(dens[startx:endx,starty:endy].transpose(), aspect='auto', origin='lower', extent=exarg,interpolation='bilinear')
+		colorbar()
+		title('$\Sigma$'); xlabel('x'); ylabel('y')
+		
+		figure()
+		imshow(vortens[startx:endx,starty:endy].transpose(), aspect='auto', origin='lower', extent=exarg,interpolation='bilinear')
+		colorbar()
+		title('Vortensity'); xlabel('x'); ylabel('y')
+		return
+	
+def loadvars(np,time,dir):
 	vx = []
 	vy = []
 	dens = []
@@ -43,19 +122,19 @@ def loadvars(np,time):
 	NC = arange(np)
 
 	for i in range(np):
-		temp = fromfile('id'+str(i)+'/vx_'+str(time)+'.dat',dtype='complex')
+		temp = fromfile(dir+'id'+str(i)+'/vx_'+str(time)+'.dat',dtype='complex')
 				
 
 		Nx[i] = int(real(temp[0]))
 		NC[i] = int(real(temp[1]))/2+1
 		vx.append(temp[2:].reshape((Nx[i],NC[i])))
 		
-		temp = fromfile('id'+str(i)+'/vy_'+str(time)+'.dat',dtype='complex')
+		temp = fromfile(dir+'id'+str(i)+'/vy_'+str(time)+'.dat',dtype='complex')
 		vy.append(temp[2:].reshape((Nx[i],NC[i])))
-		temp = fromfile('id'+str(i)+'/dens_'+str(time)+'.dat',dtype='complex')
+		temp = fromfile(dir+'id'+str(i)+'/dens_'+str(time)+'.dat',dtype='complex')
 		dens.append(temp[2:].reshape((Nx[i],NC[i])))
 		
-		temp = fromfile('id'+str(i)+'/coords.dat')
+		temp = fromfile(dir+'id'+str(i)+'/coords.dat')
 		temp=temp[2:]
 		x.append(temp[:Nx[i]])
 		if i==0:
@@ -384,18 +463,12 @@ def pspec(fld):
 	uv = zeros((fld.u.shape[1]))
 	usig = zeros((fld.u.shape[1]))
 
-	for j in range(fld.u.shape[1]):
-		u2[j] = 2*real(trapz(fld.x,conj(fld.u[:,j])*fld.u[:,j]))/fld.Lx
-		v2[j] = 2*real(trapz(fld.x,conj(fld.v[:,j])*fld.v[:,j]))/fld.Lx
-		sig2[j] = 2*real(trapz(fld.x,conj(fld.sig[:,j])*fld.sig[:,j]))/fld.Lx
-		uv[j] = 2*real(trapz(fld.x,conj(fld.u[:,j])*fld.v[:,j]))/fld.Lx
-		usig[j] = 2*real(trapz(fld.x,conj(fld.u[:,j])*fld.sig[:,j]))/fld.Lx
-
-	u2 /= u2[0]
-	v2 /= v2[0]
-	sig2 /= sig2[0]
-	uv /= uv[0]
-	usig /= usig[0]
+	
+	u2 = (2*real(conj(fld.u)*fld.u)).mean(axis=0)
+	v2 = (2*real(conj(fld.v)*fld.v)).mean(axis=0)
+	sig2 = (2*real(conj(fld.sig)*fld.sig)).mean(axis=0)
+	uv = (2*real(conj(fld.u)*fld.v)).mean(axis=0)
+	usig = (2*real(conj(fld.u)*fld.sig)).mean(axis=0)
 	
 	figure()
 	semilogy(range(fld.NC),u2,'-x')
@@ -471,7 +544,7 @@ def amf(fld,nu,mp,xs):
 	dp  = fft.irfft(sigp)
 	dxdp = fft.irfft(dxsig)
 	
-	rPixy = -fft.irfft(fld.sig) + fft.irfft(fld.sig)*rTxy
+	rPixy = fft.irfft(fld.sig)*rTxy
 	rPiyy = -fft.irfft(fld.sig) + fft.irfft(fld.sig)*rTyy
 	
 	Pixy = fft.rfft(rPixy)/norm
@@ -529,7 +602,5 @@ def amf(fld,nu,mp,xs):
 	
 	return Twd,dxFp,Th, dxFb, Fp,Fb
 	
-	
-	
-THE EDIT
+
 			

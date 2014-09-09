@@ -1,2 +1,0 @@
-#define WAVEEVOLVE
-#define TENTHDERIV
