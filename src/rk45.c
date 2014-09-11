@@ -21,6 +21,7 @@ int rk45_step_apply(Field *fld, double *t, double *h) {
 	
 	*t += oldh;
 	y_2_fld(fld,y);
+
 	
 	
 //	printf("new h = %lg\n", *h);

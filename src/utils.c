@@ -90,3 +90,21 @@ void print_time(double t) {
 	}
 	return;
 }
+
+void apply_filter(Field *fld) {
+/* Apply a raised cosine filter to the solution */
+	int i,j;
+	double sigk;
+	double fac=2*M_PI*Ny;
+	
+	for(i=NG;i<Nx+NG;i++) {
+		for(j=0;j<Nmax;j++) {
+			sigk = .5*(1+cos(j*fac));
+			fld->u[CINDX] *= sigk;
+			fld->v[CINDX] *= sigk;
+			fld->sig[CINDX] *= sigk;	
+		}
+	}
+
+	return;
+}

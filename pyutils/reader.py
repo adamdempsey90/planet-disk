@@ -1,11 +1,12 @@
 
 class Field():
 	def __init__(self,time,np,dir=''):
-		if dir[-1]!='/':
-			dir += '/'
+		if dir != '':
+			if dir[-1]!='/':
+				dir += '/'
 		vx,vy,dens,x,self.k,self.y,Nx,NC,splits = loadvars(np,time,dir);
 		self.Nx = Nx.sum()
-		self.NC = NC[0]
+		self.NC = NC
 		self.Ny = 2*self.NC-2
 		self.NR= 2*self.NC
 		
@@ -31,6 +32,8 @@ class Field():
  			self.kk[:,j] *= j
  		self.vort = dxv - 1j*self.kk*self.u	
 	
+		self.xs,self.mp,self.nu,self.h,self.q,self.om,self.c = readparams(dir)	
+		 
 	def plot(self,q,ilist,xlims=(0,0),scale=1,conj_flag=False):
 		x = self.x
 		if q=='u':
@@ -63,8 +66,8 @@ class Field():
 			xlabel('x')	
 			title(tstr)
 		return
-	def plotreal(self,xlims=(0,0),ylims=(0,0)):
-		vx,vy,dens,x,y = realspace(self)
+	def plotreal(self,xlims=(0,0),ylims=(0,0),filter='None'):
+		vx,vy,dens,x,y = realspace(self,filter)
 		vortens = (fft.irfft(self.vort)+2)/dens
 		
 		exarg = (-self.Lx/2,self.Lx/2,-self.Ly/2,self.Ly/2)
@@ -84,9 +87,6 @@ class Field():
 			starty = next(i for i,j in enumerate(temp) if j)
 			endy = next(len(temp)-i for i,j in enumerate(temp[::-1]) if j)
 			exarg = exarg[:2] + ylims
-
-
-		print (startx,endx,starty,endy)
 		
 	
 		figure()
@@ -119,27 +119,29 @@ def loadvars(np,time,dir):
 	k = []
 	
 	Nx = arange(np)
-	NC = arange(np)
 
 	for i in range(np):
+		temp = fromfile(dir+'id'+str(i)+'/coords.dat')
+		Nx[i] = int(temp[0])
+		Ny = int(temp[1])
+		NC = Ny/2+1
+		
+		x.append(temp[2:Nx[i]+2])
+		if i==0:
+			k = temp[2+Nx[i]:2+Nx[i]+NC]
+			y = temp[-Ny:]
+		
 		temp = fromfile(dir+'id'+str(i)+'/vx_'+str(time)+'.dat',dtype='complex')
 				
 
-		Nx[i] = int(real(temp[0]))
-		NC[i] = int(real(temp[1]))/2+1
-		vx.append(temp[2:].reshape((Nx[i],NC[i])))
+		
+		vx.append(temp[2:].reshape((Nx[i],NC)))
 		
 		temp = fromfile(dir+'id'+str(i)+'/vy_'+str(time)+'.dat',dtype='complex')
-		vy.append(temp[2:].reshape((Nx[i],NC[i])))
+		vy.append(temp[2:].reshape((Nx[i],NC)))
 		temp = fromfile(dir+'id'+str(i)+'/dens_'+str(time)+'.dat',dtype='complex')
-		dens.append(temp[2:].reshape((Nx[i],NC[i])))
+		dens.append(temp[2:].reshape((Nx[i],NC)))
 		
-		temp = fromfile(dir+'id'+str(i)+'/coords.dat')
-		temp=temp[2:]
-		x.append(temp[:Nx[i]])
-		if i==0:
-			k=temp[Nx[i]:Nx[i]+NC[i]]
-			y=temp[Nx[i]+NC[i]:]
 	
 	splits=[]
 	for i in range(1,np):
@@ -149,17 +151,54 @@ def loadvars(np,time,dir):
 		splits.append(temp)
 	
 	return vx,vy,dens,x,k,y,Nx,NC,splits
-			
-def realspace(fld):
+
+def readparams(dir):
+	
+	with open(dir+'id0/params.txt','r') as f:
+		for line in f.readlines():
+			if 'xsoft' in line:
+				xs = float(line.split('=')[-1])	
+			if 'Mp' in line:
+				mp = float(line.split('=')[-1])
+			if 'nu =' in line:
+				nu = float(line.split('=')[-1])
+			if 'h =' in line:
+				h = float(line.split('=')[-1])
+			if 'q =' in line:
+				q = float(line.split('=')[-1])
+			if 'omega' in line:
+				om = float(line.split('=')[-1])	
+	
+	c = h*om
+	nu *= om*h*h
+	return xs,mp,nu,h,q,om,c
+		
+def realspace(fld,filter='None'):
 #	x=hstack((-fld.x[::-1],fld.x))
 #	y=fld.y
+
+	if filter != 'None':
+		Nmax = int(fld.NC*2./3)
+		mask = zeros(fld.u.shape)
+		mask[:,:Nmax] = 1
+		if filter == 'Lanczos' or filter == 'lanczos':
+			mask *= sinc(fld.kk*fld.Ly/(2*Nmax))
+		
+		elif filter == 'Cosine' or filter == 'cosine':
+			mask *= .5*(1+cos(fld.kk*fld.Ly/(2*Nmax)))
+		else:
+			print 'Not a valid filter.'
+	else:
+		mask = ones(fld.u.shape)	
+	
+
 	y,x = meshgrid(fld.y,fld.x)
 #	sig=vstack((conj(fld.sig[::-1,:]),fld.sig))
 #	u = vstack((-conj(fld.u[::-1,:]),fld.u))
 #	v = vstack((-conj(fld.v[::-1,:]),fld.v))
-	vx = fft.irfft(fld.u)
-	vy = fft.irfft(fld.v)
-	dens = fft.irfft(fld.sig)*fld.Ny
+	vx = fft.irfft(fld.u*mask)
+	vy = fft.irfft(fld.v*mask)
+	dens = fft.irfft(fld.sig*mask)*fld.Ny
 	return vx,vy,dens,x,y
 	
 def derivs(num,Nx,Ny,NG=0,dir=''):
@@ -298,7 +337,7 @@ def animate(q,k,t,np,dt=1,xlims=(0,0),dir='',scale=True,norm=1,conj_flag=False):
 	
 		if scale:
 			ylim((qmin,qmax))
-		if ~(xlims[0]==0 and xlims[1]==0):
+		if xlims!=(0,0):
 			xlim(xlims)
 		title('t$\Omega$='+str(i*dt)+'\t k='+str(k*2*pi/temp.Ly))
 		
@@ -462,13 +501,15 @@ def pspec(fld):
 	sig2 = zeros((fld.u.shape[1]))
 	uv = zeros((fld.u.shape[1]))
 	usig = zeros((fld.u.shape[1]))
-
+	udxv = zeros((fld.u.shape[1]))
+	dxv,_ = gradient(fld.v,fld.dx,1)
 	
 	u2 = (2*real(conj(fld.u)*fld.u)).mean(axis=0)
 	v2 = (2*real(conj(fld.v)*fld.v)).mean(axis=0)
 	sig2 = (2*real(conj(fld.sig)*fld.sig)).mean(axis=0)
 	uv = (2*real(conj(fld.u)*fld.v)).mean(axis=0)
 	usig = (2*real(conj(fld.u)*fld.sig)).mean(axis=0)
+	udxv = (2*real(conj(fld.u)*dxv)).mean(axis=0)
 	
 	figure()
 	semilogy(range(fld.NC),u2,'-x')
@@ -494,113 +535,153 @@ def pspec(fld):
 	semilogy(range(fld.NC),abs(usig),'-x')
 	xlabel('k (2 $\pi$ / Ly)')
 	ylabel('$Re(u^* \sigma)$')
-	return u2,v2,sig2,uv,usig
+	
+	figure()
+	semilogy(range(fld.NC),abs(udxv),'-x')
+	xlabel('k (2 $\pi$ / Ly)')
+	ylabel('$ |u \partial_x v| $')
+	
+	return u2,v2,sig2,uv,usig,udxv
 		
 
-def amf(fld,nu,mp,xs):
-	vxbar = fld.u[:,0]
-	vybar = fld.v[:,0]
-	dbar = fld.sig[:,0]	
+def amf(fld,xlims=(0,0)):
+	nu = fld.nu
+	mp = fld.mp
+	xs = fld.xs
+	fld.v[:,0] -= fld.q*fld.om*fld.x
+	sigu = real(conj(fld.sig)*fld.u)
+	sigu = 2*sigu[:,1:].sum(axis=1)
 	
-	x = fld.x
-	up = zeros(fld.u.shape)
-	vp = zeros(fld.v.shape)
-	sigp = zeros(fld.sig.shape)
+	sigv = real(conj(fld.sig)*fld.v)
+	sigv = 2*sigv[:,1:].sum(axis=1)
 	
-	up[:,1:] = fld.u[:,1:]
-	vp[:,1:] = fld.v[:,1:]
-	sigp[:,1:] = fld.sig[:,1:] 
+	vxvy = real(conj(fld.u)*fld.v)
+	vxvy = 2*vxvy[:,1:].sum(axis=1)
 	
-	(Nx,NC) = fld.u.shape
-	norm = fld.Ny
-	
-	
-
-	dxu,_ = gradient(fld.u,fld.dx,1)
 	dxv,_ = gradient(fld.v,fld.dx,1)
-	dxsig,_ = gradient(fld.sig,fld.dx,1)
+	dxu,_ = gradient(fld.u,fld.dx,1)
+	dyu = 1j*fld.kk*fld.u
+	dyv = 1j*fld.kk*fld.v
 	
-	dyu = fld.u * 1j*fld.kk
-	dyv = fld.v * 1j*fld.kk
-	dysig = fld.sig * 1j*fld.kk
+	Txy = nu*(dxv+dyu)
+	Tyy = nu*(2*dyv-(2./3)*(dxu+dyv))
 	
-	dxvxbar = dxu[:,0]
-	dxvybar = dxv[:,0]
-	dxdbar = dxsig[:,0]
+	Pixybar = real(conj(fld.sig)*Txy)
+	Pixybar = 2*Pixybar[:,1:].sum(axis=1)
 	
-	dxu[:,0] = 0
-	dxv[:,0] = 0
-	dxsig[:,0] = 0
+	udxv = real(conj(fld.u)*dxv)
+	udxv = 2*udxv[:,1:].sum(axis=1)
 	
-	Txy = nu*(dxv + dyu) 
-	Tyy = nu*(2*dyv - (2./3)*(dxu+dyv))
-	
-	rTxy = fft.irfft(Txy)
-	rTyy = fft.irfft(Tyy)
-	vxp = fft.irfft(up)
-	dxvxp = fft.irfft(dxu)
-	vyp = fft.irfft(vp)
-	dxvyp = fft.irfft(dxv)
-	dp  = fft.irfft(sigp)
-	dxdp = fft.irfft(dxsig)
-	
-	rPixy = fft.irfft(fld.sig)*rTxy
-	rPiyy = -fft.irfft(fld.sig) + fft.irfft(fld.sig)*rTyy
-	
-	Pixy = fft.rfft(rPixy)/norm
-	Piyy = fft.rfft(rPiyy)/norm
-	
+	Pixy=fft.rfft(fft.irfft(Txy)*fft.irfft(fld.sig)*fld.Ny)/fld.Ny
+	Piyy=fft.rfft(fft.irfft(Tyy)*fft.irfft(fld.sig)*fld.Ny)/fld.Ny
 	dxPixy,_ = gradient(Pixy,fld.dx,1)
 	dyPiyy = 1j*fld.kk*Piyy
 	
-	Pixybar = Pixy[:,0]
-	dxPixybar = dxPixy[:,0]
+	Tviscp = real(conj(fld.sig)*(dxPixy+Piyy))
+	Tviscp = 2*Tviscp[:,1:].sum(axis=1)
+	Tviscp /= real(fld.sig[:,0])
 	
-	divPip = dxPixy + dyPiyy
-	divPip[:,0] = 0
+	Tviscb = real(conj(fld.sig)*fld.sig)
+	Tviscb = 2*Tviscb[:,1:].sum(axis=1)
+	Tviscb *= real(dxPixy[:,0])/(fld.sig[:,0]**2)
 	
-	rdivPip = fft.irfft(divPip)
 	
-	Twd = (dp*vxp).mean(axis=1)*(dxvybar+2) - dbar*(vxp*dxvyp).mean(axis=1) \
-			+ (dp*rdivPip).mean(axis=1) + dxPixybar*(dp*dp).mean(axis=1)/(dbar*dbar)
-
-	print Nx,NC
-# 	Twd = zeros(Nx)
-# 	for i in range(Nx):
-# 		Twd[i] = 0
-# 		for j in range(NC):
-# 			Twd[i] += 2*real(conj(sigp[i,j])*up[i,j]*(dxvybar[i]+2) - dbar[i]*conj(vxp[i,j])*dxvyp[i,j])
-
+	Twd = sigu*(real(dxv[:,0])+2*fld.om) -fld.sig[:,0]*udxv + Tviscp + Tviscb
 	
-	Fp = dbar*(vxp*vyp).mean(axis=1) + vxbar*(dp*vyp).mean(axis=1) + (dp*vxp*vyp).mean(axis=1)
-	Fb = (dbar*vxbar + (dp*vxp).mean(axis=1))*(vybar+2*x) - Pixybar
-	dxFp = gradient(Fp,fld.x)
-	dxFb = gradient(Fb,fld.x)
 	
-	yy,xx = meshgrid(fld.y,fld.x)
-	Phi = -mp/sqrt(xs**2+xx**2+yy**2)
-	phi = fft.rfft(Phi)/norm
-	
-	phi[:,0] = 0
-	dyphi = 1j*fld.kk*phi
-	
-	dyPhip = fft.irfft(dyphi)
-	
-	Th = (dp*dyPhip).mean(axis=1)
-	
+	if xlims!=(0,0):
+		inds = (fld.x > xlims[0]) & (fld.x < xlims[1])
+	else:
+		inds = ones(fld.x.shape).astype('bool')
+		
 	figure()
-	plot(x,Twd,x,-(dxFp+Th))
-	legend(('Twd','-LHS'))
-	xlabel('x')
-	title('Wave Steady State')
+	plot(fld.x[inds],(sigu*real(dxv[:,0]+2))[inds],label='$\langle \Sigma\' u\' \\rangle (\partial_x \langle v_y \\rangle + 2\Omega)$') 
+	plot(fld.x[inds],(-fld.sig[:,0]*udxv)[inds],label='$-\langle u\' \partial_x v\' \\rangle \langle \Sigma \\rangle$')
+	plot(fld.x[inds],(Tviscp+Tviscb)[inds],label='$\langle \\frac{\\nabla \cdot (\Sigma T)}{\Sigma} \\rangle$') 
+	plot(fld.x[inds],Twd[inds],label='$T_{wd}$')
+	legend()
 	
-	figure()
-	plot(x,Twd,x,dxFb)
-	legend(('Twd','dxF'))
-	xlabel('x')
-	title('Viscous Steady State')
+		
+	Fp = fld.sig[:,0]*vxvy + fld.u[:,0]*sigv
 	
-	return Twd,dxFp,Th, dxFb, Fp,Fb
 	
-
+	Fb = (fld.v[:,0]+2*fld.x)*(fld.sig[:,0]*fld.u[:,0] + sigu) - Pixy[:,0]
 			
+	vx,vy,dens,x,y = realspace(fld)
+
+	Phi = -mp/sqrt(xs**2 + x**2 + y**2)
+	phi = fft.rfft(Phi)/fld.Ny
+	
+	Th = real(conj(fld.sig)*phi*1j*fld.kk)
+	Th = 2*Th[:,1:].sum(axis=1)
+	
+	sig = zeros(dens.shape)
+	u = zeros(vx.shape)
+	v = zeros(vy.shape)
+	dbar = dens.mean(axis=1)
+	vxbar = vx.mean(axis=1)
+	vybar = vy.mean(axis=1)
+	
+	for i in range(dens.shape[0]):
+		sig[i,:] = dens[i,:] - dbar[i]
+		u[i,:] = vx[i,:] - vxbar[i]
+		v[i,:] = vy[i,:] - vybar[i]
+			
+	trip = (sig*u*v).mean(axis=1)
+	
+	Fp += trip
+	
+	dxFp = gradient(Fp,fld.dx)
+	dxFb = gradient(Fb,fld.dx)
+	
+	figure()
+	plot(fld.x[inds],Twd[inds],label='Twd')
+	plot(fld.x[inds],(-dxFp-Th)[inds],label='-(dxFp+Th)')
+	title('Wave Steady State')
+	xlabel('x')
+	legend()
+	
+		
+		
+	figure()
+	plot(fld.x[inds],Twd[inds],label='Twd')
+	plot(fld.x[inds],dxFb[inds],label='dxFb')
+	title('Viscous Steady State')
+	xlabel('x')
+	legend()
+
+		
+	fld.v[:,0] += fld.q*fld.om*fld.x
+
+	return Twd,dxFp,Th,dxFb
+def plotdenswake(fld,xvals,filter='None'):
+	x = fld.x
+	y = fld.y
+	_,_,dens,_,_=realspace(fld,filter)
+	ind = [where((x <i+fld.dx) & (x>i-fld.dx))[0][0] for i in xvals]
+
+	figure()
+	for i in ind:
+   		ysh = .75*x[i]**2
+		while abs(ysh > fld.Ly/2):
+			ysh -= fld.Ly
+		
+		
+		plot(y[::-1]-ysh,(dens[i,:]-1)/(fld.mp*sqrt(x[i])),label='$x=$'+str(round(x[i],2)))
+	xlim(-6,6)
+	legend()
+	xlabel('$y-.75 x^2$',fontsize='large')
+	ylabel('$\Delta\Sigma / \\sqrt{x}$',fontsize='large')
+	return
+
+def apply_filter(fld,filter='None',overwrite='False'):
+	vx,vy,dens,_,_=realspace(fld,filter)
+	u = fft.rfft(vx)
+	v = fft.rfft(vy)
+	sig = fft.rfft(dens)/fld.Ny
+	
+	if overwrite:
+		fld.u=u; fld.sig=sig; fld.v=v
+		return
+	else:
+		return u,v,sig	

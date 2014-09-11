@@ -151,3 +151,4 @@ void init_output(char *dir);
 void output_params(Field *fld);
 void set_pi_bc(Field *fld);
 void print_time(double t);
+void apply_filter(Field *fld);

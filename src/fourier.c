@@ -144,7 +144,14 @@ void init_fft(void) {
 	
 	for(i=0;i<Nx;i++) {
 		for(j=0;j<NC;j++) {
-			if (j < Nmax) mask[CINDX] = 1;
+			if (j < Nmax) {
+				mask[CINDX] = 1;
+#ifdef FILTER
+				mask[CINDX] *= .5*(1+cos(j*M_PI/Nmax));
+				
+//				if (j!=0) mask[CINDX] *= sin(j*M_PI/Nmax)/(j*M_PI/Nmax);
+#endif	
+			}
 			else mask[CINDX] = 0;
 		}
 	}

@@ -9,11 +9,13 @@
 
 ## Evolve the mean components
 
-#+BACKEVOLVE
++BACKEVOLVE
 
 ## Evolve in the mean-wave (quasi-linear) approximation
-#+LINEAR
++LINEAR
 
+## Apply a raised cosine filter 
+#+FILTER
 ## Operator split on background shear term
 
 #+SHEARSPLIT
@@ -44,7 +46,7 @@
 ## Boundary conditions
 
 #+EXTRAP
-#+WAVEKILLBC
++WAVEKILLBC
 
 
 ## OpenMP parallization Specify # of threads  if OPENMP is flagged

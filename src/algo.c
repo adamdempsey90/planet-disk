@@ -18,6 +18,7 @@ void func(double t, double complex *y, double complex *f,Field *fld) {
 //	printf("Fill RHS...\n");
 
 	fill_rhs(fld,t);
+
 	
 	memcpy(&f[0],fld->dtu,sizeof(double complex)*Nx*NC);
 	memcpy(&f[Nx*NC],fld->dtv,sizeof(double complex)*Nx*NC);
@@ -194,4 +195,3 @@ void shear_advection(Field *fld,double dt) {
 
 	return;
 }
-
