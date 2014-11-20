@@ -9,7 +9,7 @@ double *mask;
 
 fftw_plan r2c1, c2r1,r2c2, c2r2,r2c3, c2r3;
 
-/* This file contains all FFFTW function calls.
+/* This file contains all FFTW function calls.
 	We are using real to complex transforms with no default normalization.
 	We normalize by Ny when doing a r2c transform
 */

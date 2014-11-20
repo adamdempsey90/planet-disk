@@ -25,7 +25,10 @@ class Field():
 		self.Lx = self.Nx*self.dx
 		self.Ly = 2*self.Ny*self.y[0]/(1-self.Ny)
 		self.splits = self.x[splits]
-			
+		self.Ny = int(self.Ly/self.dx)
+		self.Ny += mod(self.Ny,2)
+		self.y = -self.Ly/2+(.5+arange(self.Ny))*(self.Ly/self.Ny)
+		
  		dxv,_=gradient(self.v,self.dx,1)
  		self.kk=ones(self.u.shape)*2*pi/self.Ly
  		for j in range(self.NC):
@@ -33,7 +36,8 @@ class Field():
  		self.vort = dxv - 1j*self.kk*self.u	
 	
 		self.xs,self.mp,self.nu,self.h,self.q,self.om,self.c = readparams(dir)	
-		 
+		self.phi = calcPhi(self)
+		
 	def plot(self,q,ilist,xlims=(0,0),scale=1,conj_flag=False):
 		x = self.x
 		if q=='u':
@@ -68,7 +72,7 @@ class Field():
 		return
 	def plotreal(self,xlims=(0,0),ylims=(0,0),filter='None'):
 		vx,vy,dens,x,y = realspace(self,filter)
-		vortens = (fft.irfft(self.vort)+2)/dens
+# 		vortens = (fft.irfft(self.vort)+2)/dens
 		
 		exarg = (-self.Lx/2,self.Lx/2,-self.Ly/2,self.Ly/2)
 		
@@ -104,12 +108,17 @@ class Field():
 		colorbar()
 		title('$\Sigma$'); xlabel('x'); ylabel('y')
 		
-		figure()
-		imshow(vortens[startx:endx,starty:endy].transpose(), aspect='auto', origin='lower', extent=exarg,interpolation='bilinear')
-		colorbar()
-		title('Vortensity'); xlabel('x'); ylabel('y')
+# 		figure()
+# 		imshow(vortens[startx:endx,starty:endy].transpose(), aspect='auto', origin='lower', extent=exarg,interpolation='bilinear')
+# 		colorbar()
+# 		title('Vortensity'); xlabel('x'); ylabel('y')
 		return
-	
+
+def calcPhi(fld):
+	yy,xx=meshgrid(fld.y,fld.x)
+	Phi = -fld.mp/sqrt(xx**2 + yy**2 + fld.xs**2)
+	phi = fft.rfft(Phi)/fld.Ny
+	return phi	
 def loadvars(np,time,dir):
 	vx = []
 	vy = []
@@ -119,7 +128,6 @@ def loadvars(np,time,dir):
 	k = []
 	
 	Nx = arange(np)
-
 	for i in range(np):
 		temp = fromfile(dir+'id'+str(i)+'/coords.dat')
 		Nx[i] = int(temp[0])
@@ -177,9 +185,26 @@ def realspace(fld,filter='None'):
 #	x=hstack((-fld.x[::-1],fld.x))
 #	y=fld.y
 
+	
+	
+	Ny = int(fld.Ly/fld.dx)
+	Ny += (1-mod(Ny,2))
+	NC = fld.u.shape[1]
+	y = -fld.Ly/2 + (.5 + arange(Ny))*fld.Ly/Ny
+	
+	y,x = meshgrid(fld.y,fld.x)
+
+	u = zeros((fld.Nx,fld.Ny/2+1),dtype='complex')
+	v = zeros(u.shape,dtype='complex')
+	sig = zeros(u.shape,dtype='complex')
+
+	u[:,:NC] = fld.u
+	v[:,:NC] = fld.v
+	sig[:,:NC] = fld.sig
+	
 	if filter != 'None':
-		Nmax = int(fld.NC*2./3)
-		mask = zeros(fld.u.shape)
+		Nmax = int(NC*2./3)
+		mask = zeros(u.shape)
 		mask[:,:Nmax] = 1
 		if filter == 'Lanczos' or filter == 'lanczos':
 			mask *= sinc(fld.kk*fld.Ly/(2*Nmax))
@@ -189,16 +214,14 @@ def realspace(fld,filter='None'):
 		else:
 			print 'Not a valid filter.'
 	else:
-		mask = ones(fld.u.shape)	
-	
-
-	y,x = meshgrid(fld.y,fld.x)
+		mask = ones(u.shape)
+		
 #	sig=vstack((conj(fld.sig[::-1,:]),fld.sig))
 #	u = vstack((-conj(fld.u[::-1,:]),fld.u))
 #	v = vstack((-conj(fld.v[::-1,:]),fld.v))
-	vx = fft.irfft(fld.u*mask)
-	vy = fft.irfft(fld.v*mask)
-	dens = fft.irfft(fld.sig*mask)*fld.Ny
+	vx = fft.irfft(u*mask)*Ny
+	vy = fft.irfft(v*mask)*Ny
+	dens = fft.irfft(sig*mask)*Ny
 	return vx,vy,dens,x,y
 	
 def derivs(num,Nx,Ny,NG=0,dir=''):
@@ -294,14 +317,15 @@ def animate(q,k,t,np,dt=1,xlims=(0,0),dir='',scale=True,norm=1,conj_flag=False):
 	x = temp.x
 	Nx = temp.Nx; Ny = temp.Ny; NC = temp.NC;
 	dat= zeros((Nx,len(t)),dtype='complex')
-	for i in t:
+	for i in range(len(t)):
+		print 'loading ',i
 		if q=='u':
-			dat[:,i] = norm*Field(i,np,dir=dir).u[:,k]
+			dat[:,i] = norm*Field(t[i],np,dir=dir).u[:,k]
 		elif q=='v':
-			dat[:,i] = norm*Field(i,np,dir=dir).v[:,k]
+			dat[:,i] = norm*Field(t[i],np,dir=dir).v[:,k]
 		
 		elif q=='sig':
-			dat[:,i] = norm*Field(i,np,dir=dir).sig[:,k]
+			dat[:,i] = norm*Field(t[i],np,dir=dir).sig[:,k]
 		else:
 			print 'Not a valid variable name'
 			return
@@ -328,7 +352,7 @@ def animate(q,k,t,np,dt=1,xlims=(0,0),dir='',scale=True,norm=1,conj_flag=False):
 			else:
 				qmax = imag(qmax)	
 			
-	for i in t:
+	for i in range(len(t)):
 		clf()
 		if k==0:
 			plot(x,real(dat[:,i]))			
@@ -339,66 +363,86 @@ def animate(q,k,t,np,dt=1,xlims=(0,0),dir='',scale=True,norm=1,conj_flag=False):
 			ylim((qmin,qmax))
 		if xlims!=(0,0):
 			xlim(xlims)
-		title('t$\Omega$='+str(i*dt)+'\t k='+str(k*2*pi/temp.Ly))
+		title('t$\Omega$='+str(t[i]*dt)+'\t k='+str(k*2*pi/temp.Ly))
 		
 		fig.canvas.draw()
 	return
 	
+def animate_real2(dat,exarg,dt=1,logscale=False):
 	
-def animate_real(q,t,np,dt=1,dir='',logscale=False):
-	temp = Field(t[0],np,dir=dir)
-	Nx=temp.Nx; Ny = temp.Ny; 
-	NC=temp.NC
-	x,y = meshgrid(temp.x,temp.y)
-	dat= zeros((Nx,Ny,len(t)))
-	for i in t:
-		fld = Field(i,np,dir=dir)
-		vx,vy,dens,_,_ = realspace(fld)
-		if q=='vx':
-			dat[:,:,i] = vx
-			tstr = 'vx at '
-		elif q=='vy':
-			dat[:,:,i] = vy
-			tstr = 'vy at '
-		elif q=='dens':
-			dat[:,:,i] = dens
-			tstr = '$\Sigma$ at '
+	dmin=dat.min()
+	dmax=dat.max()
+	fig=figure(figsize=(15,10))
+	xlabel('x'); ylabel('y')
+	for i in range(dat.shape[-1]):
+		title('t = '+str(i*dt))
+		imshow(dat[:,:,i].transpose(), aspect='auto', origin='lower',extent=exarg,interpolation='bilinear',vmin=dmin,vmax=dmax)
+		if i==0: colorbar()
+		draw()
+	
+
+	return	
+def animate_real(q,t,np,dt=1,dir='',logscale=False,xlims=(0,0),ylims=(0,0)):
+	fld = Field(t[0],np,dir=dir)
+
+	exarg = (-fld.Lx/2,fld.Lx/2,-fld.Ly/2,fld.Ly/2)
+	vx,vy,dens,_,_ = realspace(fld,'None')
+	
+	(endx,endy) = vx.shape
+	(startx,starty) = (0,0)
+	
+	if xlims!=(0,0):
+		temp = (fld.x > xlims[0]) & (fld.x < xlims[1])
+		startx = next(i for i,j in enumerate(temp) if j)
+		endx = next(len(temp)-i for i,j in enumerate(temp[::-1]) if j)
+		exarg = xlims + exarg[-2:]
+	
+	if ylims!=(0,0):
+		temp = (fld.y > ylims[0]) & (fld.y < ylims[1])
+		starty = next(i for i,j in enumerate(temp) if j)
+		endy = next(len(temp)-i for i,j in enumerate(temp[::-1]) if j)
+		exarg = exarg[:2] + ylims
+
+	dat = zeros(vx[startx:endx,starty:endy].shape + (len(t),))
+
+	for i in range(len(t)):
+		vx,vy,dens,_,_ = realspace(Field(t[i],np,dir=dir),'None')
+		if q=='u':
+			dat[:,:,i] = vx[startx:endx,starty:endy]
+		elif q=='v':
+			dat[:,:,i] = vy[startx:endx,starty:endy]
+		elif q=='sig':
+			dat[:,:,i] = dens[startx:endx,starty:endy]
+ 
 		else:
 			print 'Not a valid variable name'
 			return
 	
-	
-	d_min = dat.min(); d_max = dat.max();
-
-	fig=figure(figsize=(15,10))
-	for i in t:
-		clf()
-		if logscale:
-			imshow(log10(dat[:,:,i]).transpose(),aspect='auto',vmin=log10(d_min),vmax=log10(d_max), \
-			extent=(temp.x[0],temp.x[-1],temp.y[0],temp.y[-1]))
-		else:
-			imshow(dat[:,:,i].transpose(),aspect='auto',vmin=d_min,vmax=d_max, \
-			extent=(temp.x[0],temp.x[-1],temp.y[0],temp.y[-1]))
-		colorbar()
-		title(tstr + 't$\Omega$='+str(i*dt))
-		fig.canvas.draw()
-
-	return
+# 	dmin=dat.min()
+# 	dmax=dat.max()
+# 	fig=figure(figsize=(15,10))
+# 	xlabel('x'); ylabel('y')
+# 	for i in t:
+# 		title(tstr[i])
+# 		imshow(dat[:,:,i].transpose(), aspect='auto', origin='lower',extent=exarg,interpolation='bilinear',vmin=dmin,vmax=dmax)
+# 		if i==0: colorbar()
+# 		draw()
+	return dat,exarg
 
 def plotreal(fld,tstr=''):
 	vx,vy,dens,x,y = realspace(fld)
 	figure()
-	pcolor(x,y,vx); colorbar()
+	pcolormesh(x,y,vx); colorbar()
 	xlabel('x')
 	title('v_x       ' + tstr)
 
 	figure()
-	pcolor(x,y,vy); colorbar()
+	pcolormesh(x,y,vy); colorbar()
 	xlabel('x')
 	title('\delta v_y     ' + tstr)
 	
 	figure()
-	pcolor(x,y,log10(dens)); colorbar()
+	pcolormesh(x,y,log10(dens)); colorbar()
 	xlabel('x')
 	title('log10($\Sigma$)      ' + tstr)
 	
@@ -544,116 +588,206 @@ def pspec(fld):
 	return u2,v2,sig2,uv,usig,udxv
 		
 
-def amf(fld,xlims=(0,0)):
-	nu = fld.nu
-	mp = fld.mp
-	xs = fld.xs
-	fld.v[:,0] -= fld.q*fld.om*fld.x
-	sigu = real(conj(fld.sig)*fld.u)
-	sigu = 2*sigu[:,1:].sum(axis=1)
+def amf(fld):
+	om = fld.om
+	vx,vy,dens,xx,yy = realspace(fld)
 	
-	sigv = real(conj(fld.sig)*fld.v)
-	sigv = 2*sigv[:,1:].sum(axis=1)
+#	vy -= fld.q*fld.om*xx
 	
-	vxvy = real(conj(fld.u)*fld.v)
-	vxvy = 2*vxvy[:,1:].sum(axis=1)
+	dxvx,dyvx = gradient(vx,fld.dx,fld.Ly/fld.Ny)
+	dxvy,dyvy = gradient(vy,fld.dx,fld.Ly/fld.Ny)
 	
-	dxv,_ = gradient(fld.v,fld.dx,1)
-	dxu,_ = gradient(fld.u,fld.dx,1)
-	dyu = 1j*fld.kk*fld.u
-	dyv = 1j*fld.kk*fld.v
+	Phi = -fld.mp/sqrt(xx**2 + yy**2 + fld.xs**2)
+	_,dyPhi = gradient(Phi,fld.dx,fld.Ly/fld.Ny)
 	
-	Txy = nu*(dxv+dyu)
-	Tyy = nu*(2*dyv-(2./3)*(dxu+dyv))
+	vxbar = real(fld.u[:,0])
+	vybar = real(fld.v[:,0] - fld.q*fld.om*fld.x)
+	dbar = real(fld.sig[:,0])
 	
-	Pixybar = real(conj(fld.sig)*Txy)
-	Pixybar = 2*Pixybar[:,1:].sum(axis=1)
-	
-	udxv = real(conj(fld.u)*dxv)
-	udxv = 2*udxv[:,1:].sum(axis=1)
-	
-	Pixy=fft.rfft(fft.irfft(Txy)*fft.irfft(fld.sig)*fld.Ny)/fld.Ny
-	Piyy=fft.rfft(fft.irfft(Tyy)*fft.irfft(fld.sig)*fld.Ny)/fld.Ny
-	dxPixy,_ = gradient(Pixy,fld.dx,1)
-	dyPiyy = 1j*fld.kk*Piyy
-	
-	Tviscp = real(conj(fld.sig)*(dxPixy+Piyy))
-	Tviscp = 2*Tviscp[:,1:].sum(axis=1)
-	Tviscp /= real(fld.sig[:,0])
-	
-	Tviscb = real(conj(fld.sig)*fld.sig)
-	Tviscb = 2*Tviscb[:,1:].sum(axis=1)
-	Tviscb *= real(dxPixy[:,0])/(fld.sig[:,0]**2)
-	
-	
-	Twd = sigu*(real(dxv[:,0])+2*fld.om) -fld.sig[:,0]*udxv + Tviscp + Tviscb
-	
-	
-	if xlims!=(0,0):
-		inds = (fld.x > xlims[0]) & (fld.x < xlims[1])
-	else:
-		inds = ones(fld.x.shape).astype('bool')
-		
-	figure()
-	plot(fld.x[inds],(sigu*real(dxv[:,0]+2))[inds],label='$\langle \Sigma\' u\' \\rangle (\partial_x \langle v_y \\rangle + 2\Omega)$') 
-	plot(fld.x[inds],(-fld.sig[:,0]*udxv)[inds],label='$-\langle u\' \partial_x v\' \\rangle \langle \Sigma \\rangle$')
-	plot(fld.x[inds],(Tviscp+Tviscb)[inds],label='$\langle \\frac{\\nabla \cdot (\Sigma T)}{\Sigma} \\rangle$') 
-	plot(fld.x[inds],Twd[inds],label='$T_{wd}$')
-	legend()
-	
-		
-	Fp = fld.sig[:,0]*vxvy + fld.u[:,0]*sigv
-	
-	
-	Fb = (fld.v[:,0]+2*fld.x)*(fld.sig[:,0]*fld.u[:,0] + sigu) - Pixy[:,0]
-			
-	vx,vy,dens,x,y = realspace(fld)
-
-	Phi = -mp/sqrt(xs**2 + x**2 + y**2)
-	phi = fft.rfft(Phi)/fld.Ny
-	
-	Th = real(conj(fld.sig)*phi*1j*fld.kk)
-	Th = 2*Th[:,1:].sum(axis=1)
-	
-	sig = zeros(dens.shape)
 	u = zeros(vx.shape)
 	v = zeros(vy.shape)
-	dbar = dens.mean(axis=1)
-	vxbar = vx.mean(axis=1)
-	vybar = vy.mean(axis=1)
+	sig = zeros(dens.shape)
+
+	Pixy = fld.nu*(dyvx+dxvy)*dens
+	Piyy = fld.nu*dens*(2*dyvy - (2./3)*(dxvx+dyvy))
+	pixybar = real(Pixy.mean(axis=1))
+	piyybar = real(Piyy.mean(axis=1))
+	pixyp = zeros(Pixy.shape)
+	piyyp = zeros(Piyy.shape)
 	
-	for i in range(dens.shape[0]):
-		sig[i,:] = dens[i,:] - dbar[i]
-		u[i,:] = vx[i,:] - vxbar[i]
-		v[i,:] = vy[i,:] - vybar[i]
-			
-	trip = (sig*u*v).mean(axis=1)
+	for j in range(u.shape[1]):
+		u[:,j] = vx[:,j] - vxbar
+		v[:,j] = vy[:,j] - vybar
+		sig[:,j] = dens[:,j] - dbar
+		pixyp[:,j] = Pixy[:,j] - pixybar
+		piyyp[:,j] = Piyy[:,j] - piyybar
+
+	dxu,_ = gradient(u,fld.dx,1)
+	dxv,_ = gradient(v,fld.dx,1)
 	
-	Fp += trip
+	Twd = -dbar*(u*dxv).mean(axis=1) + (dxv[:,0]+2*fld.om)*(sig*u).mean(axis=1)
 	
-	dxFp = gradient(Fp,fld.dx)
+	divP,_ = gradient(pixyp,fld.dx,1)
+	_,dyP = gradient(piyyp,fld.dx,fld.Ly/fld.Ny)
+	
+	divP += dyP
+	
+	dxPixybar= gradient(pixybar,fld.dx)
+	
+	
+	
+	visc = (sig**2).mean(axis=1) * dxPixybar/(dbar**2) - (sig*divP).mean(axis=1)/dbar
+	Twd += visc
+	
+ 		
+	Ftot =(dens*vx*(vy+2*fld.om*xx) - Pixy).mean(axis=1)
+	dxFtot = gradient(Ftot,fld.dx)
+	
+	Fb = (dbar*vxbar+(sig*u).mean(axis=1))*(vybar+2*om*fld.x) - Pixy.mean(axis=1)
 	dxFb = gradient(Fb,fld.dx)
+	Fp = Ftot-Fb
+	dxFp = dxFtot - dxFb
+#	Fp = vxbar*(sig*v).mean(axis=1) + dbar*(u*v).mean(axis=1)
 	
+	Th = (sig*dyPhi).mean(axis=1)
+	  
 	figure()
-	plot(fld.x[inds],Twd[inds],label='Twd')
-	plot(fld.x[inds],(-dxFp-Th)[inds],label='-(dxFp+Th)')
-	title('Wave Steady State')
+	plot(fld.x,Twd,label='$T_{wd}$')
+#	plot(fld.x,-dxFp,label='$\\partial_x F_p$')
+#	plot(fld.x,-Th,label='$\Sigma \\partial_y \Phi$')
+	plot(fld.x,dxFp+Th,label='$-\\partial_x F_p - \Sigma \\partial_y \\Phi $')
 	xlabel('x')
 	legend()
 	
-		
-		
 	figure()
-	plot(fld.x[inds],Twd[inds],label='Twd')
-	plot(fld.x[inds],dxFb[inds],label='dxFb')
-	title('Viscous Steady State')
+	plot(fld.x,Twd,label='$T_{wd}$')
+	plot(fld.x,dxFb,label='$\\partial_x F_b $')
 	xlabel('x')
 	legend()
+	return Twd,dxFp,Th,Fp
 
-		
-	fld.v[:,0] += fld.q*fld.om*fld.x
 
-	return Twd,dxFp,Th,dxFb
+
+# def amf(fld,xlims=(0,0)):
+# 	nu = fld.nu
+# 	mp = fld.mp
+# 	xs = fld.xs
+# 	fld.v[:,0] -= fld.q*fld.om*fld.x
+# 	sigu = real(conj(fld.sig)*fld.u)
+# 	sigu = 2*sigu[:,1:].sum(axis=1)
+# 	
+# 	sigv = real(conj(fld.sig)*fld.v)
+# 	sigv = 2*sigv[:,1:].sum(axis=1)
+# 	
+# 	vxvy = real(conj(fld.u)*fld.v)
+# 	vxvy = 2*vxvy[:,1:].sum(axis=1)
+# 	
+# 	dxv,_ = gradient(fld.v,fld.dx,1)
+# 	dxu,_ = gradient(fld.u,fld.dx,1)
+# 	dyu = 1j*fld.kk*fld.u
+# 	dyv = 1j*fld.kk*fld.v
+# 	
+# 	Txy = nu*(dxv+dyu)
+# 	Tyy = nu*(2*dyv-(2./3)*(dxu+dyv))
+# 	
+# 	Pixy = zeros(fld.sig.shape)
+# 	Piyy = zeros(fld.sig.shape)
+# 	temp = real(conj(fld.sig)*Txy)
+# 	Pixy[:,0] = 2*temp[:,1:].sum(axis=1)
+# 	
+# 	temp = real(conj(fld.sig)*Tyy)
+# 	Piyy[:,0] = 2*temp[:,1:].sum(axis=1)
+# 	
+# 	udxv = real(conj(fld.u)*dxv)
+# 	udxv = 2*udxv[:,1:].sum(axis=1)
+# 	
+# #	Pixy=fft.rfft(fft.irfft(Txy)*fft.irfft(fld.sig)*fld.Ny)/fld.Ny
+# #	Piyy=fft.rfft(fft.irfft(Tyy)*fft.irfft(fld.sig)*fld.Ny)/fld.Ny
+# 	
+# 	for j in range(Pixy.shape[0]):
+# 		Pixy[j,1:] = Txy[j,0]*fld.sig[j,1:] + Txy[j,1:]*fld.sig[j,0]
+# 		Piyy[j,1:] = Tyy[j,0]*fld.sig[j,1:] + Tyy[j,1:]*fld.sig[j,0]
+# 	dxPixy,_ = gradient(Pixy,fld.dx,1)
+# 	dyPiyy = 1j*fld.kk*Piyy
+# 	
+# 	Tviscp = real(conj(fld.sig)*(dxPixy+Piyy))
+# 	Tviscp = 2*Tviscp[:,1:].sum(axis=1)
+# 	Tviscp /= real(fld.sig[:,0])
+# 	
+# 	Tviscb = real(conj(fld.sig)*fld.sig)
+# 	Tviscb = 2*Tviscb[:,1:].sum(axis=1)
+# 	Tviscb *= real(dxPixy[:,0])/(fld.sig[:,0]**2)
+# 	
+# 	
+# 	Twd = sigu*(real(dxv[:,0])+2*fld.om) -fld.sig[:,0]*udxv + Tviscp + Tviscb
+# 	
+# 	
+# 	if xlims!=(0,0):
+# 		inds = (fld.x > xlims[0]) & (fld.x < xlims[1])
+# 	else:
+# 		inds = ones(fld.x.shape).astype('bool')
+# 		
+# 	figure()
+# 	plot(fld.x[inds],(sigu*real(dxv[:,0]+2))[inds],label='$\langle \Sigma\' u\' \\rangle (\partial_x \langle v_y \\rangle + 2\Omega)$') 
+# 	plot(fld.x[inds],(-fld.sig[:,0]*udxv)[inds],label='$-\langle u\' \partial_x v\' \\rangle \langle \Sigma \\rangle$')
+# 	plot(fld.x[inds],(Tviscp+Tviscb)[inds],label='$\langle \\frac{\\nabla \cdot (\Sigma T)}{\Sigma} \\rangle$') 
+# 	plot(fld.x[inds],Twd[inds],label='$T_{wd}$')
+# 	legend()
+# 	
+# 		
+# 	Fp = fld.sig[:,0]*vxvy + fld.u[:,0]*sigv
+# 	
+# 	
+# 	Fb = (fld.v[:,0]+2*fld.x)*(fld.sig[:,0]*fld.u[:,0] + sigu) - Pixy[:,0]
+# 			
+# 	vx,vy,dens,x,y = realspace(fld)
+# 
+# 	Phi = -mp/sqrt(xs**2 + x**2 + y**2)
+# 	phi = fft.rfft(Phi)/fld.Ny
+# 	
+# 	Th = real(conj(fld.sig)*phi*1j*fld.kk)
+# 	Th = 2*Th[:,1:].sum(axis=1)
+# 	
+# 	sig = zeros(dens.shape)
+# 	u = zeros(vx.shape)
+# 	v = zeros(vy.shape)
+# 	dbar = dens.mean(axis=1)
+# 	vxbar = vx.mean(axis=1)
+# 	vybar = vy.mean(axis=1)
+# 	
+# 	for i in range(dens.shape[0]):
+# 		sig[i,:] = dens[i,:] - dbar[i]
+# 		u[i,:] = vx[i,:] - vxbar[i]
+# 		v[i,:] = vy[i,:] - vybar[i]
+# 			
+# 	trip = (sig*u*v).mean(axis=1)
+# 	
+# 	Fp += trip
+# 	
+# 	dxFp = gradient(Fp,fld.dx)
+# 	dxFb = gradient(Fb,fld.dx)
+# 	
+# 	figure()
+# 	plot(fld.x[inds],Twd[inds],label='Twd')
+# 	plot(fld.x[inds],(-dxFp-Th)[inds],label='-(dxFp+Th)')
+# 	title('Wave Steady State')
+# 	xlabel('x')
+# 	legend()
+# 	
+# 		
+# 		
+# 	figure()
+# 	plot(fld.x[inds],Twd[inds],label='Twd')
+# 	plot(fld.x[inds],dxFb[inds],label='dxFb')
+# 	title('Viscous Steady State')
+# 	xlabel('x')
+# 	legend()
+# 
+# 		
+# 	fld.v[:,0] += fld.q*fld.om*fld.x
+# 
+# 	return Twd,dxFp,Th,dxFb
+
 def plotdenswake(fld,xvals,filter='None'):
 	x = fld.x
 	y = fld.y
@@ -673,8 +807,22 @@ def plotdenswake(fld,xvals,filter='None'):
 	xlabel('$y-.75 x^2$',fontsize='large')
 	ylabel('$\Delta\Sigma / \\sqrt{x}$',fontsize='large')
 	return
+	
+def conv(input1,input2,linear=True):
+	Nx, NC = input1.shape
+	Ny = 2*NC-2
+	if ~linear:
+		mask = zeros((Nx,NC))
+		Nmax = (2./3)*NC
+		mask[:,:Nmax] = 1
+	else:
+		mask = ones((Nx,NC))
+		Nmax = NC-1
+	out = fft.rfft(fft.irfft(input1*mask)*fft.irfft(input2*mask))*Ny
+	return out
 
-def apply_filter(fld,filter='None',overwrite='False'):
+	
+def apply_filter(fld,filter='None',overwrite=False):
 	vx,vy,dens,_,_=realspace(fld,filter)
 	u = fft.rfft(vx)
 	v = fft.rfft(vy)
@@ -685,3 +833,5 @@ def apply_filter(fld,filter='None',overwrite='False'):
 		return
 	else:
 		return u,v,sig	
+		
+	

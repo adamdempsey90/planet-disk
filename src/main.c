@@ -116,7 +116,7 @@ int main (int argc, char *argv[]) {
    
 
 #ifdef WAVEKILLBC
-	if (rank==0 || rank==np-1)	wavekillbc(fld,dt);
+	wavekillbc(fld,dt);
 #endif
      
       
